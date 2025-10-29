@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useInventoryStore } from '../../src/store/inventoryStore';
 import { useRouter } from 'expo-router';
 import BarcodeScanner from '../../src/components/BarcodeScanner';
+import DateInputOptions from '../../src/components/DateInputOptions';
+import DateScanner from '../../src/components/DateScanner';
 import { fetchProductByBarcode, parseQuantity } from '../../src/services/barcodeService';
 
 export default function AddItemScreen() {
@@ -15,9 +17,14 @@ export default function AddItemScreen() {
   const [quantity, setQuantity] = useState('1');
   const [quantityUnit, setQuantityUnit] = useState('count');
   const [storageLocation, setStorageLocation] = useState('Fridge');
-  const [daysUntilExpiry, setDaysUntilExpiry] = useState('7');
+  const [bestBeforeDate, setBestBeforeDate] = useState<Date>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    return date;
+  });
 
   const [showScanner, setShowScanner] = useState(false);
+  const [showDateScanner, setShowDateScanner] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
 
@@ -69,7 +76,6 @@ export default function AddItemScreen() {
 
     const itemCountNum = parseInt(itemCount, 10);
     const quantityNum = parseFloat(quantity);
-    const daysNum = parseInt(daysUntilExpiry, 10);
 
     if (isNaN(itemCountNum) || itemCountNum <= 0) {
       Alert.alert('Error', 'Please enter a valid item count');
@@ -81,13 +87,10 @@ export default function AddItemScreen() {
       return;
     }
 
-    if (isNaN(daysNum) || daysNum < 0) {
-      Alert.alert('Error', 'Please enter valid days until expiry');
+    if (!bestBeforeDate || isNaN(bestBeforeDate.getTime())) {
+      Alert.alert('Error', 'Please select a valid expiry date');
       return;
     }
-
-    const bestBeforeDate = new Date();
-    bestBeforeDate.setDate(bestBeforeDate.getDate() + daysNum);
 
     addItem({
       productName: productName.trim(),
@@ -110,7 +113,9 @@ export default function AddItemScreen() {
           setBrand('');
           setItemCount('1');
           setQuantity('1');
-          setDaysUntilExpiry('7');
+          const defaultDate = new Date();
+          defaultDate.setDate(defaultDate.getDate() + 7);
+          setBestBeforeDate(defaultDate);
           setScannedBarcode(null);
           // Navigate to home
           router.push('/');
@@ -268,21 +273,12 @@ export default function AddItemScreen() {
           </View>
         </View>
 
-        {/* Days Until Expiry */}
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Days Until Expiry *</Text>
-          <TextInput
-            style={styles.input}
-            value={daysUntilExpiry}
-            onChangeText={setDaysUntilExpiry}
-            placeholder="7"
-            keyboardType="number-pad"
-            placeholderTextColor="#9CA3AF"
-          />
-          <Text style={styles.helperText}>
-            How many days from today until this item expires
-          </Text>
-        </View>
+        {/* Expiry Date Input Options */}
+        <DateInputOptions
+          initialDate={bestBeforeDate}
+          onDateChange={setBestBeforeDate}
+          onScanPress={() => setShowDateScanner(true)}
+        />
 
         {/* Add Button */}
         <Pressable style={styles.addButton} onPress={handleAddItem}>
@@ -293,10 +289,10 @@ export default function AddItemScreen() {
         <View style={styles.featureNote}>
           <Text style={styles.featureNoteTitle}>🚧 Coming Soon:</Text>
           <Text style={styles.featureNoteText}>
-            • OCR for automatic expiry date detection{'\n'}
             • Photo capture for items{'\n'}
             • Custom storage locations{'\n'}
-            • AI recipe suggestions
+            • AI recipe suggestions{'\n'}
+            • Full OCR integration with Google Cloud Vision
           </Text>
         </View>
       </View>
@@ -311,6 +307,21 @@ export default function AddItemScreen() {
       <BarcodeScanner
         onBarcodeScanned={handleBarcodeScanned}
         onClose={() => setShowScanner(false)}
+      />
+    </Modal>
+
+    {/* Date Scanner Modal */}
+    <Modal
+      visible={showDateScanner}
+      animationType="slide"
+      onRequestClose={() => setShowDateScanner(false)}
+    >
+      <DateScanner
+        onDateScanned={(date) => {
+          setBestBeforeDate(date);
+          setShowDateScanner(false);
+        }}
+        onClose={() => setShowDateScanner(false)}
       />
     </Modal>
     </>

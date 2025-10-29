@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import { InventoryItem } from '../store/inventoryStore';
+import DateInputOptions from './DateInputOptions';
+import DateScanner from './DateScanner';
 
 interface EditItemModalProps {
   visible: boolean;
@@ -32,6 +34,7 @@ export default function EditItemModal({
   const [storageLocation, setStorageLocation] = useState('Fridge');
   const [purchaseDate, setPurchaseDate] = useState(new Date());
   const [bestBeforeDate, setBestBeforeDate] = useState(new Date());
+  const [showDateScanner, setShowDateScanner] = useState(false);
 
   const units = ['count', 'g', 'kg', 'ml', 'L', 'oz', 'lb'];
   const locations = ['Fridge', 'Pantry', 'Freezer'];
@@ -259,40 +262,11 @@ export default function EditItemModal({
             </View>
 
             {/* Best Before Date */}
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Best Before Date *</Text>
-              <View style={styles.dateContainer}>
-                <Text style={styles.dateText}>
-                  {formatDateForDisplay(bestBeforeDate)}
-                </Text>
-                <View style={styles.dateAdjustButtons}>
-                  <Pressable
-                    style={styles.dateAdjustButton}
-                    onPress={() =>
-                      setBestBeforeDate(adjustDate(bestBeforeDate, -1))
-                    }
-                  >
-                    <Text style={styles.dateAdjustButtonText}>-1d</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.dateAdjustButton}
-                    onPress={() =>
-                      setBestBeforeDate(adjustDate(bestBeforeDate, 1))
-                    }
-                  >
-                    <Text style={styles.dateAdjustButtonText}>+1d</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.dateAdjustButton}
-                    onPress={() =>
-                      setBestBeforeDate(adjustDate(bestBeforeDate, 7))
-                    }
-                  >
-                    <Text style={styles.dateAdjustButtonText}>+7d</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </View>
+            <DateInputOptions
+              initialDate={bestBeforeDate}
+              onDateChange={setBestBeforeDate}
+              onScanPress={() => setShowDateScanner(true)}
+            />
           </ScrollView>
 
           {/* Action Buttons */}
@@ -312,6 +286,21 @@ export default function EditItemModal({
           </View>
         </View>
       </View>
+
+      {/* Date Scanner Modal */}
+      <Modal
+        visible={showDateScanner}
+        animationType="slide"
+        onRequestClose={() => setShowDateScanner(false)}
+      >
+        <DateScanner
+          onDateScanned={(date) => {
+            setBestBeforeDate(date);
+            setShowDateScanner(false);
+          }}
+          onClose={() => setShowDateScanner(false)}
+        />
+      </Modal>
     </Modal>
   );
 }

@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, TextInput } from 'react-native';
+import { useState, useMemo } from 'react';
 import { useInventoryStore, InventoryItem } from '../../src/store/inventoryStore';
 import EditItemModal from '../../src/components/EditItemModal';
 import UseSomeModal from '../../src/components/UseSomeModal';
@@ -9,15 +9,53 @@ export default function HomeScreen() {
   const getExpiryStatus = useInventoryStore((state) => state.getExpiryStatus);
   const removeItem = useInventoryStore((state) => state.removeItem);
   const updateItem = useInventoryStore((state) => state.updateItem);
+  const recordUsage = useInventoryStore((state) => state.recordUsage);
+  const loadData = useInventoryStore((state) => state.loadData);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [useSomeModalVisible, setUseSomeModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterLocation, setFilterLocation] = useState<string | null>(null);
 
-  // Sort items by expiry date (soonest first)
-  const sortedItems = [...items].sort(
-    (a, b) => a.bestBeforeDate.getTime() - b.bestBeforeDate.getTime()
-  );
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
+  // Filter and sort items
+  const filteredAndSortedItems = useMemo(() => {
+    let filtered = items;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (item) =>
+          item.productName.toLowerCase().includes(query) ||
+          item.brand?.toLowerCase().includes(query) ||
+          item.category?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply location filter
+    if (filterLocation) {
+      filtered = filtered.filter((item) => item.storageLocation === filterLocation);
+    }
+
+    // Sort by expiry date (soonest first)
+    return [...filtered].sort(
+      (a, b) => a.bestBeforeDate.getTime() - b.bestBeforeDate.getTime()
+    );
+  }, [items, searchQuery, filterLocation]);
+
+  // Get unique locations for filter
+  const locations = useMemo(() => {
+    const uniqueLocations = Array.from(new Set(items.map((item) => item.storageLocation)));
+    return uniqueLocations.sort();
+  }, [items]);
 
   const formatExpiryText = (daysUntilExpiry: number) => {
     if (daysUntilExpiry < 0) {
@@ -48,8 +86,75 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#10B981']} />
+      }
+    >
       <View style={styles.content}>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search items..."
+            placeholderTextColor="#9CA3AF"
+          />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Text style={styles.clearButtonText}>✕</Text>
+            </Pressable>
+          )}
+        </View>
+
+        {/* Location Filter */}
+        {locations.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterContainer}
+            contentContainerStyle={styles.filterContent}
+          >
+            <Pressable
+              style={[
+                styles.filterChip,
+                filterLocation === null && styles.filterChipActive,
+              ]}
+              onPress={() => setFilterLocation(null)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  filterLocation === null && styles.filterChipTextActive,
+                ]}
+              >
+                All
+              </Text>
+            </Pressable>
+            {locations.map((location) => (
+              <Pressable
+                key={location}
+                style={[
+                  styles.filterChip,
+                  filterLocation === location && styles.filterChipActive,
+                ]}
+                onPress={() => setFilterLocation(location)}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    filterLocation === location && styles.filterChipTextActive,
+                  ]}
+                >
+                  {location === 'Fridge' ? '❄️' : location === 'Freezer' ? '🧊' : '🏪'} {location}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+
         {/* Summary Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
@@ -65,8 +170,27 @@ export default function HomeScreen() {
         </View>
 
         {/* Items List */}
-        <Text style={styles.sectionTitle}>Your Inventory</Text>
-        {sortedItems.map((item) => {
+        <Text style={styles.sectionTitle}>
+          {searchQuery || filterLocation ? 'Filtered Results' : 'Your Inventory'}
+          {(searchQuery || filterLocation) && (
+            <Text style={styles.resultCount}> ({filteredAndSortedItems.length})</Text>
+          )}
+        </Text>
+        {filteredAndSortedItems.length === 0 && (searchQuery || filterLocation) ? (
+          <View style={styles.noResultsContainer}>
+            <Text style={styles.noResultsText}>No items found</Text>
+            <Pressable
+              onPress={() => {
+                setSearchQuery('');
+                setFilterLocation(null);
+              }}
+              style={styles.clearFiltersButton}
+            >
+              <Text style={styles.clearFiltersText}>Clear filters</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        {filteredAndSortedItems.map((item) => {
           const { color, daysUntilExpiry, status } = getExpiryStatus(item.bestBeforeDate);
 
           return (
@@ -161,10 +285,15 @@ export default function HomeScreen() {
           setSelectedItem(null);
         }}
         onUseSome={(id, newQuantity) => {
-          if (newQuantity === 0) {
-            removeItem(id);
-          } else {
-            updateItem(id, { quantity: newQuantity });
+          if (selectedItem) {
+            const quantityUsed = selectedItem.quantity - newQuantity;
+            recordUsage(id, selectedItem.productName, quantityUsed, selectedItem.quantityUnit);
+
+            if (newQuantity === 0) {
+              removeItem(id);
+            } else {
+              updateItem(id, { quantity: newQuantity });
+            }
           }
           setUseSomeModalVisible(false);
           setSelectedItem(null);
@@ -196,6 +325,86 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+  },
+  searchContainer: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  searchInput: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#111827',
+    paddingRight: 40,
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E5E7EB',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  filterContainer: {
+    marginBottom: 16,
+  },
+  filterContent: {
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  filterChipActive: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  filterChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  filterChipTextActive: {
+    color: '#FFFFFF',
+  },
+  resultCount: {
+    color: '#6B7280',
+    fontWeight: '400',
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: '#6B7280',
+    marginBottom: 12,
+  },
+  clearFiltersButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+  },
+  clearFiltersText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   emptyContainer: {
     flex: 1,
