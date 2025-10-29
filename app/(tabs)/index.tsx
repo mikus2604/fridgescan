@@ -1,10 +1,16 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { useInventoryStore } from '../../src/store/inventoryStore';
+import { useState } from 'react';
+import { useInventoryStore, InventoryItem } from '../../src/store/inventoryStore';
+import EditItemModal from '../../src/components/EditItemModal';
 
 export default function HomeScreen() {
   const items = useInventoryStore((state) => state.items);
   const getExpiryStatus = useInventoryStore((state) => state.getExpiryStatus);
   const removeItem = useInventoryStore((state) => state.removeItem);
+  const updateItem = useInventoryStore((state) => state.updateItem);
+
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   // Sort items by expiry date (soonest first)
   const sortedItems = [...items].sort(
@@ -120,6 +126,17 @@ export default function HomeScreen() {
                   <Text style={styles.actionButtonText}>Use Some</Text>
                 </Pressable>
                 <Pressable
+                  style={[styles.actionButton, styles.editButton]}
+                  onPress={() => {
+                    setSelectedItem(item);
+                    setEditModalVisible(true);
+                  }}
+                >
+                  <Text style={[styles.actionButtonText, { color: '#3B82F6' }]}>
+                    Edit
+                  </Text>
+                </Pressable>
+                <Pressable
                   style={[styles.actionButton, styles.removeButton]}
                   onPress={() => removeItem(item.id)}
                 >
@@ -132,6 +149,21 @@ export default function HomeScreen() {
           );
         })}
       </View>
+
+      {/* Edit Modal */}
+      <EditItemModal
+        visible={editModalVisible}
+        item={selectedItem}
+        onClose={() => {
+          setEditModalVisible(false);
+          setSelectedItem(null);
+        }}
+        onSave={(id, updates) => {
+          updateItem(id, updates);
+          setEditModalVisible(false);
+          setSelectedItem(null);
+        }}
+      />
     </ScrollView>
   );
 }
@@ -285,6 +317,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  editButton: {
+    backgroundColor: '#DBEAFE',
   },
   removeButton: {
     backgroundColor: '#FEE2E2',
