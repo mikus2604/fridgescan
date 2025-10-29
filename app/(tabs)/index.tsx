@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useState } from 'react';
 import { useInventoryStore, InventoryItem } from '../../src/store/inventoryStore';
 import EditItemModal from '../../src/components/EditItemModal';
+import UseSomeModal from '../../src/components/UseSomeModal';
 
 export default function HomeScreen() {
   const items = useInventoryStore((state) => state.items);
@@ -10,6 +11,7 @@ export default function HomeScreen() {
   const updateItem = useInventoryStore((state) => state.updateItem);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [useSomeModalVisible, setUseSomeModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   // Sort items by expiry date (soonest first)
@@ -119,8 +121,8 @@ export default function HomeScreen() {
                 <Pressable
                   style={styles.actionButton}
                   onPress={() => {
-                    // TODO: Implement use some functionality
-                    console.log('Use some:', item.id);
+                    setSelectedItem(item);
+                    setUseSomeModalVisible(true);
                   }}
                 >
                   <Text style={styles.actionButtonText}>Use Some</Text>
@@ -149,6 +151,25 @@ export default function HomeScreen() {
           );
         })}
       </View>
+
+      {/* Use Some Modal */}
+      <UseSomeModal
+        visible={useSomeModalVisible}
+        item={selectedItem}
+        onClose={() => {
+          setUseSomeModalVisible(false);
+          setSelectedItem(null);
+        }}
+        onUseSome={(id, newQuantity) => {
+          if (newQuantity === 0) {
+            removeItem(id);
+          } else {
+            updateItem(id, { quantity: newQuantity });
+          }
+          setUseSomeModalVisible(false);
+          setSelectedItem(null);
+        }}
+      />
 
       {/* Edit Modal */}
       <EditItemModal
