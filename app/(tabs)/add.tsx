@@ -11,6 +11,7 @@ export default function AddItemScreen() {
 
   const [productName, setProductName] = useState('');
   const [brand, setBrand] = useState('');
+  const [itemCount, setItemCount] = useState('1');
   const [quantity, setQuantity] = useState('1');
   const [quantityUnit, setQuantityUnit] = useState('count');
   const [storageLocation, setStorageLocation] = useState('Fridge');
@@ -66,8 +67,14 @@ export default function AddItemScreen() {
       return;
     }
 
+    const itemCountNum = parseInt(itemCount, 10);
     const quantityNum = parseFloat(quantity);
     const daysNum = parseInt(daysUntilExpiry, 10);
+
+    if (isNaN(itemCountNum) || itemCountNum <= 0) {
+      Alert.alert('Error', 'Please enter a valid item count');
+      return;
+    }
 
     if (isNaN(quantityNum) || quantityNum <= 0) {
       Alert.alert('Error', 'Please enter a valid quantity');
@@ -85,6 +92,7 @@ export default function AddItemScreen() {
     addItem({
       productName: productName.trim(),
       brand: brand.trim() || undefined,
+      itemCount: itemCountNum,
       quantity: quantityNum,
       quantityUnit,
       bestBeforeDate,
@@ -100,6 +108,7 @@ export default function AddItemScreen() {
           // Reset form
           setProductName('');
           setBrand('');
+          setItemCount('1');
           setQuantity('1');
           setDaysUntilExpiry('7');
           setScannedBarcode(null);
@@ -176,9 +185,25 @@ export default function AddItemScreen() {
           />
         </View>
 
+        {/* Item Count */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Number of Items *</Text>
+          <TextInput
+            style={styles.input}
+            value={itemCount}
+            onChangeText={setItemCount}
+            placeholder="1"
+            keyboardType="number-pad"
+            placeholderTextColor="#9CA3AF"
+          />
+          <Text style={styles.helperText}>
+            How many packages/items? (e.g., 2 bottles, 3 packs)
+          </Text>
+        </View>
+
         {/* Quantity */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Quantity *</Text>
+          <Text style={styles.label}>Quantity per Item *</Text>
           <View style={styles.quantityContainer}>
             <TextInput
               style={[styles.input, styles.quantityInput]}

@@ -88,9 +88,9 @@ export default function HomeScreen() {
               {/* Item Details */}
               <View style={styles.itemDetails}>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Quantity:</Text>
+                  <Text style={styles.detailLabel}>Items:</Text>
                   <Text style={styles.detailValue}>
-                    {item.quantity} {item.quantityUnit}
+                    {item.itemCount} × {item.quantity} {item.quantityUnit}
                   </Text>
                 </View>
                 <View style={styles.detailRow}>

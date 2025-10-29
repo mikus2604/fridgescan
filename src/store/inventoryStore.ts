@@ -4,6 +4,7 @@ export interface InventoryItem {
   id: string;
   productName: string;
   brand?: string;
+  itemCount: number; // Number of packages/items (e.g., 2 bottles, 3 packs)
   quantity: number;
   quantityUnit: string;
   bestBeforeDate: Date;
@@ -33,6 +34,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
       id: '1',
       productName: 'Milk',
       brand: 'Organic Valley',
+      itemCount: 2, // 2 bottles
       quantity: 1,
       quantityUnit: 'L',
       bestBeforeDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
@@ -44,6 +46,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
       id: '2',
       productName: 'Chicken Breast',
       brand: 'Fresh Farms',
+      itemCount: 1, // 1 pack
       quantity: 500,
       quantityUnit: 'g',
       bestBeforeDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
@@ -55,7 +58,8 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
       id: '3',
       productName: 'Yogurt',
       brand: 'Chobani',
-      quantity: 4,
+      itemCount: 4, // 4 cups
+      quantity: 1,
       quantityUnit: 'count',
       bestBeforeDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
       purchaseDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
@@ -66,6 +70,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
       id: '4',
       productName: 'Pasta',
       brand: 'Barilla',
+      itemCount: 2, // 2 boxes
       quantity: 500,
       quantityUnit: 'g',
       bestBeforeDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
@@ -77,6 +82,7 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
       id: '5',
       productName: 'Strawberries',
       brand: 'Local Farm',
+      itemCount: 1, // 1 container
       quantity: 250,
       quantityUnit: 'g',
       bestBeforeDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // Expired yesterday
