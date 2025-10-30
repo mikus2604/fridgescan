@@ -313,22 +313,37 @@ export function validateDate(
 }
 
 /**
- * Clean text to remove common OCR artifacts
+ * Clean text to remove common OCR artifacts and normalize date formats
  */
 export function cleanOCRText(text: string): string {
-  return (
-    text
-      // Replace letter O with zero in number contexts
-      .replace(/(\d)O(\d)/g, '$10$2')
-      .replace(/O(\d)/g, '0$1')
-      .replace(/(\d)O/g, '$10')
-      // Replace letter l/I with 1 in number contexts
-      .replace(/(\d)[lI](\d)/g, '$11$2')
-      .replace(/[lI](\d)/g, '1$1')
-      .replace(/(\d)[lI]/g, '$11')
-      // Remove spaces in dates
-      .replace(/(\d)\s+(\d)/g, '$1$2')
-      // Normalize separators
-      .replace(/[\/\-\.]/g, '/')
-  );
+  let cleaned = text;
+
+  // First, normalize common date prefixes to make parsing easier
+  cleaned = cleaned
+    .replace(/BEST\s*BEFORE[:\s]*/gi, '')
+    .replace(/USE\s*BY[:\s]*/gi, '')
+    .replace(/EXP(?:IRY)?[:\s]*/gi, '')
+    .replace(/EXPIRES?[:\s]*/gi, '')
+    .replace(/BB[:\s]*/gi, '') // BB is common for "Best Before"
+    .replace(/SELL\s*BY[:\s]*/gi, '')
+    .replace(/MFG[:\s]*/gi, '') // Manufacturing date
+    .replace(/PKD[:\s]*/gi, ''); // Packed date
+
+  // Replace letter O with zero in number contexts
+  cleaned = cleaned
+    .replace(/(\d)O(\d)/g, '$10$2')
+    .replace(/O(\d{1,2})(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/gi, '0$1$2')
+    .replace(/O(\d)/g, '0$1')
+    .replace(/(\d)O/g, '$10');
+
+  // Replace letter l/I with 1 in number contexts
+  cleaned = cleaned
+    .replace(/(\d)[lI](\d)/g, '$11$2')
+    .replace(/[lI](\d)/g, '1$1')
+    .replace(/(\d)[lI]/g, '$11');
+
+  // Remove extra spaces but preserve single spaces between date components
+  cleaned = cleaned.replace(/\s{2,}/g, ' ').trim();
+
+  return cleaned;
 }

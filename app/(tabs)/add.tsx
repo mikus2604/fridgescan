@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert, ActivityIndicator, Modal } from 'react-native';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useInventoryStore } from '../../src/store/inventoryStore';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import BarcodeScanner from '../../src/components/BarcodeScanner';
 import DateInputOptions from '../../src/components/DateInputOptions';
 import DateScanner from '../../src/components/DateScanner';
@@ -12,6 +12,7 @@ export default function AddItemScreen() {
   const router = useRouter();
   const addItem = useInventoryStore((state) => state.addItem);
   const { colors, theme } = useTheme();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [productName, setProductName] = useState('');
   const [brand, setBrand] = useState('');
@@ -32,6 +33,13 @@ export default function AddItemScreen() {
 
   const units = ['count', 'g', 'kg', 'ml', 'L', 'oz', 'lb'];
   const locations = ['Fridge', 'Pantry', 'Freezer'];
+
+  // Scroll to top when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   const handleBarcodeScanned = async (barcode: string) => {
     setShowScanner(false);
@@ -128,7 +136,10 @@ export default function AddItemScreen() {
 
   return (
     <>
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        ref={scrollViewRef}
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <View style={styles.content}>
           <Text style={[styles.headerText, { color: colors.text }]}>Add New Item</Text>
           <Text style={[styles.subHeaderText, { color: colors.textSecondary }]}>

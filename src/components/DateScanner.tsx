@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator, Dimensions } from 'react-native';
 import { useState, useRef } from 'react';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { extractTextFromImage, formatDate } from '../services/ocrService';
 import { useTheme } from '../theme/ThemeContext';
+import { cropToRegion } from '../utils/imagePreprocessing';
 
 interface DateScannerProps {
   onDateScanned: (date: Date) => void;
@@ -14,6 +15,7 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
   const [permission, requestPermission] = useCameraPermissions();
   const [isProcessing, setIsProcessing] = useState(false);
   const cameraRef = useRef<any>(null);
+  const scanFrameRef = useRef<View>(null);
 
   if (!permission) {
     return (
@@ -54,17 +56,51 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
       });
 
       // Process the image URI (not base64)
-      await processImageForDate(photo.uri);
+      await processImageForDate(photo.uri, photo.width, photo.height);
     } catch (error) {
       Alert.alert('Error', 'Failed to capture photo. Please try again.');
       setIsProcessing(false);
     }
   };
 
-  const processImageForDate = async (imageUri: string) => {
+  const processImageForDate = async (imageUri: string, imageWidth: number, imageHeight: number) => {
     try {
-      // Extract text from image using OCR
-      const result = await extractTextFromImage(imageUri);
+      // Get screen dimensions
+      const screenWidth = Dimensions.get('window').width;
+      const screenHeight = Dimensions.get('window').height;
+
+      // Define scan frame dimensions (must match styles.scanFrame)
+      const SCAN_FRAME_WIDTH = 280;
+      const SCAN_FRAME_HEIGHT = 160;
+
+      // Calculate the scan frame position on screen (centered horizontally)
+      const scanFrameX = (screenWidth - SCAN_FRAME_WIDTH) / 2;
+
+      // The scan frame is vertically centered in the middle section of the overlay
+      // We need to account for the header and calculate vertical position
+      // Based on the layout: header at top, scanFrame in center, controls at bottom
+      // Approximate vertical center position (you may need to adjust based on actual layout)
+      const scanFrameY = (screenHeight - SCAN_FRAME_HEIGHT) / 2;
+
+      // Calculate the crop region in image coordinates
+      // Map screen coordinates to image coordinates
+      const scaleX = imageWidth / screenWidth;
+      const scaleY = imageHeight / screenHeight;
+
+      const cropRegion = {
+        x: Math.round(scanFrameX * scaleX),
+        y: Math.round(scanFrameY * scaleY),
+        width: Math.round(SCAN_FRAME_WIDTH * scaleX),
+        height: Math.round(SCAN_FRAME_HEIGHT * scaleY),
+      };
+
+      console.log('Cropping image to scan frame region:', cropRegion);
+
+      // Crop the image to just the scan frame region
+      const croppedImage = await cropToRegion(imageUri, cropRegion);
+
+      // Extract text from the cropped image using OCR
+      const result = await extractTextFromImage(croppedImage.uri);
 
       if (!result.success) {
         Alert.alert(

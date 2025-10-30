@@ -36,7 +36,16 @@ export interface NativeOCRResult extends OCRResult {
 export function isNativeOCRAvailable(): boolean {
   // Native OCR is available on Android and iOS only
   // Not available on web
-  return Platform.OS === 'android' || Platform.OS === 'ios';
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
+    return false;
+  }
+
+  // Check if the ML Kit module is actually linked
+  try {
+    return TextRecognition && typeof TextRecognition.recognize === 'function';
+  } catch {
+    return false;
+  }
 }
 
 /**
