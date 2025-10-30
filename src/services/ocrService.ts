@@ -42,24 +42,57 @@ export async function extractTextFromImage(imageUri: string): Promise<OCRResult>
       console.log('[OCR] Using native ML Kit OCR...');
       const nativeResult = await recognizeTextNative(preprocessed.uri);
 
+      console.log('[OCR] Native OCR result:', {
+        success: nativeResult.success,
+        hasText: !!nativeResult.text,
+        textLength: nativeResult.text?.length || 0,
+        confidence: nativeResult.confidence,
+        error: nativeResult.error,
+      });
+
       if (nativeResult.success && nativeResult.text) {
         // Clean OCR artifacts
         const cleanedText = cleanOCRText(nativeResult.text);
-        console.log('[OCR] Native OCR success:', cleanedText);
+        console.log('[OCR] Native OCR cleaned text:', cleanedText);
 
-        // Parse and validate date
-        const parsedDate = parseDateFromText(cleanedText);
+        // Validate that we got meaningful text (not gibberish)
+        const hasDatePatterns = /\d{1,4}[\/\-\.\s]\d{1,2}[\/\-\.\s]?\d{0,4}|\d{2,8}|(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/i.test(cleanedText);
 
-        return {
-          success: true,
-          text: cleanedText,
-          date: parsedDate.date,
-          confidence: parsedDate.confidence || nativeResult.confidence,
-          method: 'native',
-        };
+        // IMPORTANT: Don't reject based on text length - a single digit can be valid!
+        // For example, scanning just "25" might be part of a date
+
+        // Reject if no date-like patterns found at all
+        if (!hasDatePatterns) {
+          console.log('[OCR] Native OCR text validation failed - no date patterns found');
+          console.log('[OCR] Detected text:', cleanedText);
+          console.log('[OCR] Attempting cloud OCR fallback...');
+        } else {
+          // Parse and validate date
+          const parsedDate = parseDateFromText(cleanedText);
+
+          if (parsedDate.date) {
+            console.log('[OCR] ✓ Native OCR success with valid date:', parsedDate.date);
+            console.log('[OCR] Confidence:', parsedDate.confidence);
+            return {
+              success: true,
+              text: cleanedText,
+              date: parsedDate.date,
+              confidence: parsedDate.confidence || nativeResult.confidence,
+              method: 'native',
+            };
+          }
+
+          console.log('[OCR] Native OCR found date patterns but could not parse valid date');
+          console.log('[OCR] Detected text:', cleanedText);
+          console.log('[OCR] Attempting cloud OCR fallback...');
+        }
+      } else {
+        console.log('[OCR] Native OCR returned no text or failed');
+        console.log('[OCR] Error:', nativeResult.error);
+        console.log('[OCR] Attempting cloud OCR fallback...');
       }
-
-      console.log('[OCR] Native OCR failed, falling back to cloud...');
+    } else {
+      console.log('[OCR] Native OCR not available on this platform');
     }
 
     // Step 3: Fallback to cloud OCR (web platform or if native failed)
@@ -211,20 +244,20 @@ export function parseDateFromText(text: string): ParsedDate {
 
   // Common date patterns on food packaging
   const patterns = [
+    // YYYY/MM/DD, YYYY-MM-DD (ISO format - try first for highest confidence)
+    { regex: /(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/g, format: 'YYYY/MM/DD' },
     // DD/MM/YYYY, DD/MM/YY
     { regex: /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/g, format: 'DD/MM/YYYY' },
-    // YYYY/MM/DD, YYYY-MM-DD
-    { regex: /(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/g, format: 'YYYY/MM/DD' },
     // DDMMMYY or DDMMMYYYY (no spaces, e.g., "30NOV25", "25DEC2024")
     { regex: /(\d{1,2})(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*(\d{2,4})/gi, format: 'DD MMM YYYY' },
     // DD MMM YYYY, DD MMM YY with spaces (e.g., "25 DEC 2024", "30 NOV 25")
     { regex: /(\d{1,2})\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\s+(\d{2,4})/gi, format: 'DD MMM YYYY' },
     // MMM DD YYYY (e.g., "DEC 25 2024")
     { regex: /(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\s*(\d{1,2})[,\s]+(\d{2,4})/gi, format: 'MMM DD YYYY' },
-    // DDMMYYYY, DDMMYY (no separators, only digits)
+    // YYYYMMDD (8 digits, no separators)
+    { regex: /\b(20\d{2})(\d{2})(\d{2})\b/g, format: 'YYYYMMDD' },
+    // DDMMYYYY, DDMMYY (6-8 digits, no separators) - try last due to ambiguity
     { regex: /\b(\d{2})(\d{2})(\d{2,4})\b/g, format: 'DDMMYYYY' },
-    // YYYYMMDD
-    { regex: /\b(\d{4})(\d{2})(\d{2})\b/g, format: 'YYYYMMDD' },
   ];
 
   const potentialDates: { date: Date; confidence: number }[] = [];

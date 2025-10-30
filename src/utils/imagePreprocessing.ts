@@ -33,14 +33,14 @@ export async function preprocessImageForOCR(
     sharpen = true,
     grayscale = false,
     resize = true,
-    targetWidth = 1200,
-    quality = 0.9,
+    targetWidth = 1600, // Increased from 1200 for better OCR accuracy
+    quality = 0.95, // Increased from 0.9 to preserve detail
   } = options;
 
   try {
     let manipulations: ImageManipulator.Action[] = [];
 
-    // Step 1: Resize to optimal resolution (300+ DPI equivalent)
+    // Step 1: Resize to optimal resolution (higher DPI for better OCR)
     if (resize) {
       manipulations.push({
         resize: {
@@ -51,14 +51,14 @@ export async function preprocessImageForOCR(
 
     // Step 2: Apply sharpening to enhance edges
     // Note: expo-image-manipulator doesn't have built-in sharpen
-    // We'll use a combination of techniques
+    // We compensate with higher quality and larger resolution
 
     let result = await ImageManipulator.manipulateAsync(
       imageUri,
       manipulations,
       {
         compress: quality,
-        format: ImageManipulator.SaveFormat.JPEG,
+        format: ImageManipulator.SaveFormat.PNG, // PNG for better quality vs JPEG
       }
     );
 

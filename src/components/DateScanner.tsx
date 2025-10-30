@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator, Dimensions, LayoutChangeEvent } from 'react-native';
 import { useState, useRef } from 'react';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { extractTextFromImage, formatDate } from '../services/ocrService';
@@ -10,10 +10,18 @@ interface DateScannerProps {
   onClose: () => void;
 }
 
+interface ScanFrameLayout {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export default function DateScanner({ onDateScanned, onClose }: DateScannerProps) {
   const { colors } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [scanFrameLayout, setScanFrameLayout] = useState<ScanFrameLayout | null>(null);
   const cameraRef = useRef<any>(null);
   const scanFrameRef = useRef<View>(null);
 
@@ -45,19 +53,35 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
     );
   }
 
+  const handleScanFrameLayout = (event: LayoutChangeEvent) => {
+    const { x, y, width, height } = event.nativeEvent.layout;
+    setScanFrameLayout({ x, y, width, height });
+    console.log('[DateScanner] Scan frame layout:', { x, y, width, height });
+  };
+
   const takePicture = async () => {
     if (!cameraRef.current || isProcessing) return;
+
+    if (!scanFrameLayout) {
+      Alert.alert('Error', 'Scan frame not ready. Please wait a moment and try again.');
+      return;
+    }
 
     try {
       setIsProcessing(true);
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+        quality: 1.0, // Maximum quality for OCR
         base64: false,
+        exif: false,
+        skipProcessing: false,
       });
+
+      console.log('[DateScanner] Photo captured:', { width: photo.width, height: photo.height, uri: photo.uri });
 
       // Process the image URI (not base64)
       await processImageForDate(photo.uri, photo.width, photo.height);
     } catch (error) {
+      console.error('[DateScanner] Photo capture error:', error);
       Alert.alert('Error', 'Failed to capture photo. Please try again.');
       setIsProcessing(false);
     }
@@ -65,39 +89,46 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
 
   const processImageForDate = async (imageUri: string, imageWidth: number, imageHeight: number) => {
     try {
+      if (!scanFrameLayout) {
+        throw new Error('Scan frame layout not available');
+      }
+
       // Get screen dimensions
       const screenWidth = Dimensions.get('window').width;
       const screenHeight = Dimensions.get('window').height;
 
-      // Define scan frame dimensions (must match styles.scanFrame)
-      const SCAN_FRAME_WIDTH = 280;
-      const SCAN_FRAME_HEIGHT = 160;
-
-      // Calculate the scan frame position on screen (centered horizontally)
-      const scanFrameX = (screenWidth - SCAN_FRAME_WIDTH) / 2;
-
-      // The scan frame is vertically centered in the middle section of the overlay
-      // We need to account for the header and calculate vertical position
-      // Based on the layout: header at top, scanFrame in center, controls at bottom
-      // Approximate vertical center position (you may need to adjust based on actual layout)
-      const scanFrameY = (screenHeight - SCAN_FRAME_HEIGHT) / 2;
+      console.log('[DateScanner] Screen dimensions:', { screenWidth, screenHeight });
+      console.log('[DateScanner] Image dimensions:', { imageWidth, imageHeight });
+      console.log('[DateScanner] Scan frame layout:', scanFrameLayout);
 
       // Calculate the crop region in image coordinates
       // Map screen coordinates to image coordinates
       const scaleX = imageWidth / screenWidth;
       const scaleY = imageHeight / screenHeight;
 
+      console.log('[DateScanner] Scale factors:', { scaleX, scaleY });
+
+      // Use actual measured scan frame position from layout
       const cropRegion = {
-        x: Math.round(scanFrameX * scaleX),
-        y: Math.round(scanFrameY * scaleY),
-        width: Math.round(SCAN_FRAME_WIDTH * scaleX),
-        height: Math.round(SCAN_FRAME_HEIGHT * scaleY),
+        x: Math.max(0, Math.round(scanFrameLayout.x * scaleX)),
+        y: Math.max(0, Math.round(scanFrameLayout.y * scaleY)),
+        width: Math.round(scanFrameLayout.width * scaleX),
+        height: Math.round(scanFrameLayout.height * scaleY),
       };
 
-      console.log('Cropping image to scan frame region:', cropRegion);
+      // Validate crop region
+      if (cropRegion.x < 0 || cropRegion.y < 0 ||
+          cropRegion.x + cropRegion.width > imageWidth ||
+          cropRegion.y + cropRegion.height > imageHeight) {
+        console.error('[DateScanner] Invalid crop region:', cropRegion);
+        throw new Error('Crop region is out of image bounds');
+      }
+
+      console.log('[DateScanner] Crop region (validated):', cropRegion);
 
       // Crop the image to just the scan frame region
       const croppedImage = await cropToRegion(imageUri, cropRegion);
+      console.log('[DateScanner] Image cropped successfully:', croppedImage);
 
       // Extract text from the cropped image using OCR
       const result = await extractTextFromImage(croppedImage.uri);
@@ -105,14 +136,14 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
       if (!result.success) {
         Alert.alert(
           'Scan Failed',
-          result.error || 'Could not extract text from image. Please try again with better lighting.',
+          result.error || 'Could not extract text from image. Please try again with better lighting and make sure the date is clearly visible within the frame.',
           [
             {
               text: 'Retry',
               onPress: () => setIsProcessing(false),
             },
             {
-              text: 'Use Manual Entry',
+              text: 'Manual Entry',
               onPress: () => onClose(),
               style: 'cancel',
             },
@@ -123,9 +154,12 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
 
       if (!result.date) {
         // No date found, but text was extracted
+        const detectedText = result.text?.substring(0, 100) || '';
+        const method = result.method || 'unknown';
+
         Alert.alert(
           'No Date Found',
-          `Detected text: "${result.text?.substring(0, 100)}..."\n\nCould not identify a date. Please try again or use manual entry.`,
+          `OCR detected: "${detectedText}"${detectedText.length >= 100 ? '...' : ''}\n\nMethod: ${method}\n\nCould not identify a valid date. Tips:\n• Position the date within the frame\n• Ensure good lighting\n• Hold camera steady\n• Get close to the text`,
           [
             {
               text: 'Retry',
@@ -143,9 +177,11 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
 
       // Successfully found a date!
       const confidence = result.confidence || 0;
+      const method = result.method === 'native' ? 'Native ML Kit' : 'Cloud OCR';
+
       Alert.alert(
         'Date Detected!',
-        `Found expiry date: ${formatDate(result.date)}\n\nConfidence: ${confidence}%\n\nIs this correct?`,
+        `Found expiry date: ${formatDate(result.date)}\n\nMethod: ${method}\nConfidence: ${Math.round(confidence)}%\n\nIs this correct?`,
         [
           {
             text: 'Yes, Use This Date',
@@ -191,6 +227,8 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
         ref={cameraRef}
         style={styles.camera}
         facing="back"
+        autofocus="on"
+        enableTorch={false}
       >
         <View style={styles.overlay}>
           {/* Header */}
@@ -202,7 +240,11 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
           </View>
 
           {/* Scanning Frame */}
-          <View style={styles.scanFrame}>
+          <View
+            ref={scanFrameRef}
+            style={styles.scanFrame}
+            onLayout={handleScanFrameLayout}
+          >
             <View style={[styles.corner, styles.cornerTopLeft, { borderColor: colors.primary }]} />
             <View style={[styles.corner, styles.cornerTopRight, { borderColor: colors.primary }]} />
             <View style={[styles.corner, styles.cornerBottomLeft, { borderColor: colors.primary }]} />

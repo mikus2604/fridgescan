@@ -60,18 +60,39 @@ export async function recognizeTextNative(
 
   try {
     if (!isNativeOCRAvailable()) {
+      console.log('[Native OCR] Not available on this platform');
       return {
         success: false,
         error: 'Native OCR not available on this platform',
       };
     }
 
+    console.log('[Native OCR] Starting text recognition on image:', imageUri);
+
     // Use ML Kit Text Recognition
     const result = await TextRecognition.recognize(imageUri);
 
     const processingTime = Date.now() - startTime;
 
-    if (!result || !result.text) {
+    console.log('[Native OCR] Recognition completed in', processingTime, 'ms');
+    console.log('[Native OCR] Result:', {
+      hasText: !!result?.text,
+      textLength: result?.text?.length || 0,
+      blockCount: result?.blocks?.length || 0,
+    });
+
+    if (!result) {
+      console.warn('[Native OCR] ML Kit returned null/undefined result');
+      return {
+        success: false,
+        error: 'OCR engine returned no result',
+        processingTime,
+      };
+    }
+
+    if (!result.text || result.text.trim() === '') {
+      console.warn('[Native OCR] No text detected in image');
+      console.log('[Native OCR] Block count:', result.blocks?.length || 0);
       return {
         success: false,
         error: 'No text detected in image',
@@ -79,29 +100,44 @@ export async function recognizeTextNative(
       };
     }
 
-    console.log('[Native OCR] Raw text detected:', result.text);
+    console.log('[Native OCR] ✓ Raw text detected:', result.text);
     console.log('[Native OCR] Processing time:', processingTime, 'ms');
 
     // Extract text blocks with confidence scores
-    const blocks: TextBlock[] = result.blocks.map((block) => ({
-      text: block.text,
-      confidence: block.recognizedLanguages?.[0]?.confidence || 0.85,
-      boundingBox: block.frame
-        ? {
-            x: block.frame.x,
-            y: block.frame.y,
-            width: block.frame.width,
-            height: block.frame.height,
-          }
-        : undefined,
-    }));
+    const blocks: TextBlock[] = (result.blocks || []).map((block) => {
+      const confidence = block.recognizedLanguages?.[0]?.confidence || 0.85;
+      console.log('[Native OCR] Block text:', block.text, '| confidence:', confidence);
+
+      return {
+        text: block.text,
+        confidence,
+        boundingBox: block.frame
+          ? {
+              x: block.frame.x,
+              y: block.frame.y,
+              width: block.frame.width,
+              height: block.frame.height,
+            }
+          : undefined,
+      };
+    });
+
+    console.log('[Native OCR] Total blocks extracted:', blocks.length);
 
     // Parse date from the extracted text
     const parsedDate = parseDateFromText(result.text);
 
+    console.log('[Native OCR] Date parsing result:', {
+      hasDate: !!parsedDate.date,
+      date: parsedDate.date,
+      confidence: parsedDate.confidence,
+    });
+
     // Calculate overall confidence based on blocks
     const avgConfidence =
-      blocks.reduce((sum, b) => sum + b.confidence, 0) / blocks.length || 0.8;
+      blocks.length > 0
+        ? blocks.reduce((sum, b) => sum + b.confidence, 0) / blocks.length
+        : 0.8;
 
     return {
       success: true,
@@ -114,6 +150,13 @@ export async function recognizeTextNative(
     };
   } catch (error) {
     console.error('[Native OCR] Recognition error:', error);
+
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('[Native OCR] Error name:', error.name);
+      console.error('[Native OCR] Error message:', error.message);
+      console.error('[Native OCR] Error stack:', error.stack);
+    }
 
     const processingTime = Date.now() - startTime;
 
