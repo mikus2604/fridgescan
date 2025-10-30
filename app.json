@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "FridgeScan",
+    "slug": "fridgescan",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,14 +21,30 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "package": "com.justarieldotcom.fridgescan"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
-      "expo-barcode-scanner"
-    ]
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow FridgeScan to access your camera to scan barcodes and expiry dates."
+        }
+      ],
+      "expo-dev-client"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c18e261b-e538-453e-a240-77c5bd262531"
+      }
+    },
+    "owner": "justarieldotcom"
   }
 }
