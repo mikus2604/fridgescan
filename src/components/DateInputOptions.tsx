@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TextInput, Pressable, Platform } from 'react-native';
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTheme } from '../theme/ThemeContext';
 
 export type DateInputMethod = 'days' | 'manual' | 'scan';
 
@@ -15,6 +16,7 @@ export default function DateInputOptions({
   onDateChange,
   onScanPress,
 }: DateInputOptionsProps) {
+  const { colors } = useTheme();
   const [selectedMethod, setSelectedMethod] = useState<DateInputMethod>('days');
   const [daysUntilExpiry, setDaysUntilExpiry] = useState('7');
   const [selectedDate, setSelectedDate] = useState(initialDate);
@@ -66,16 +68,16 @@ export default function DateInputOptions({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Best Before Date *</Text>
-      <Text style={styles.helperText}>Choose your preferred input method:</Text>
+      <Text style={[styles.label, { color: colors.text }]}>Best Before Date *</Text>
+      <Text style={[styles.helperText, { color: colors.textSecondary }]}>Choose your preferred input method:</Text>
 
       {/* Scan Date Button - Prominent Style */}
       <Pressable
-        style={styles.scanButton}
+        style={[styles.scanButton, { backgroundColor: colors.success }]}
         onPress={() => handleMethodSelect('scan')}
       >
         <Text style={styles.scanButtonIcon}>📷</Text>
-        <Text style={styles.scanButtonText}>Scan Date</Text>
+        <Text style={[styles.scanButtonText, { color: colors.white }]}>Scan Date</Text>
       </Pressable>
 
       {/* Method Selection Buttons */}
@@ -83,7 +85,8 @@ export default function DateInputOptions({
         <Pressable
           style={[
             styles.methodButton,
-            selectedMethod === 'manual' && styles.methodButtonActive,
+            { backgroundColor: colors.inputBackground, borderColor: 'transparent' },
+            selectedMethod === 'manual' && { backgroundColor: colors.primaryLight, borderColor: colors.primary },
           ]}
           onPress={() => handleMethodSelect('manual')}
         >
@@ -91,7 +94,8 @@ export default function DateInputOptions({
           <Text
             style={[
               styles.methodButtonText,
-              selectedMethod === 'manual' && styles.methodButtonTextActive,
+              { color: colors.textSecondary },
+              selectedMethod === 'manual' && { color: colors.primaryDark },
             ]}
           >
             Pick Date
@@ -101,7 +105,8 @@ export default function DateInputOptions({
         <Pressable
           style={[
             styles.methodButton,
-            selectedMethod === 'days' && styles.methodButtonActive,
+            { backgroundColor: colors.inputBackground, borderColor: 'transparent' },
+            selectedMethod === 'days' && { backgroundColor: colors.primaryLight, borderColor: colors.primary },
           ]}
           onPress={() => handleMethodSelect('days')}
         >
@@ -109,7 +114,8 @@ export default function DateInputOptions({
           <Text
             style={[
               styles.methodButtonText,
-              selectedMethod === 'days' && styles.methodButtonTextActive,
+              { color: colors.textSecondary },
+              selectedMethod === 'days' && { color: colors.primaryDark },
             ]}
           >
             Add Days
@@ -118,19 +124,19 @@ export default function DateInputOptions({
       </View>
 
       {/* Input Area Based on Selected Method */}
-      <View style={styles.inputArea}>
+      <View style={[styles.inputArea, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         {selectedMethod === 'days' && (
           <View>
-            <Text style={styles.inputLabel}>Days Until Expiry:</Text>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Days Until Expiry:</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
               value={daysUntilExpiry}
               onChangeText={handleDaysChange}
               placeholder="7"
               keyboardType="number-pad"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textSecondary}
             />
-            <Text style={styles.inputHelperText}>
+            <Text style={[styles.inputHelperText, { color: colors.textSecondary }]}>
               How many days from today until this item expires
             </Text>
           </View>
@@ -138,7 +144,7 @@ export default function DateInputOptions({
 
         {selectedMethod === 'manual' && (
           <View>
-            <Text style={styles.inputLabel}>Select Expiry Date:</Text>
+            <Text style={[styles.inputLabel, { color: colors.text }]}>Select Expiry Date:</Text>
 
             {Platform.OS === 'web' ? (
               <DateTimePicker
@@ -152,10 +158,10 @@ export default function DateInputOptions({
             ) : (
               <>
                 <Pressable
-                  style={styles.dateButton}
+                  style={[styles.dateButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
                   onPress={() => setShowDatePicker(true)}
                 >
-                  <Text style={styles.dateButtonText}>
+                  <Text style={[styles.dateButtonText, { color: colors.text }]}>
                     {formatDateForDisplay(selectedDate)}
                   </Text>
                   <Text style={styles.dateButtonIcon}>📅</Text>
@@ -173,15 +179,15 @@ export default function DateInputOptions({
 
                 {Platform.OS === 'ios' && showDatePicker && (
                   <Pressable
-                    style={styles.doneButton}
+                    style={[styles.doneButton, { backgroundColor: colors.success }]}
                     onPress={() => setShowDatePicker(false)}
                   >
-                    <Text style={styles.doneButtonText}>Done</Text>
+                    <Text style={[styles.doneButtonText, { color: colors.white }]}>Done</Text>
                   </Pressable>
                 )}
               </>
             )}
-            <Text style={styles.inputHelperText}>
+            <Text style={[styles.inputHelperText, { color: colors.textSecondary }]}>
               Select the best before or use by date from the calendar
             </Text>
           </View>
@@ -199,16 +205,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
     marginBottom: 4,
   },
   helperText: {
     fontSize: 14,
-    color: '#6B7280',
     marginBottom: 12,
   },
   scanButton: {
-    backgroundColor: '#10B981',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -229,7 +232,6 @@ const styles = StyleSheet.create({
   scanButtonText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   methodSelector: {
     flexDirection: 'row',
@@ -240,15 +242,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 8,
-    backgroundColor: '#F3F4F6',
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  methodButtonActive: {
-    backgroundColor: '#D1FAE5',
-    borderColor: '#10B981',
   },
   methodIcon: {
     fontSize: 24,
@@ -257,44 +253,31 @@ const styles = StyleSheet.create({
   methodButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4B5563',
     textAlign: 'center',
   },
-  methodButtonTextActive: {
-    color: '#065F46',
-  },
   inputArea: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     borderRadius: 8,
     padding: 16,
   },
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F9FAFB',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
     marginBottom: 8,
   },
   inputHelperText: {
     fontSize: 12,
-    color: '#6B7280',
   },
   dateButton: {
-    backgroundColor: '#F9FAFB',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -305,7 +288,6 @@ const styles = StyleSheet.create({
   },
   dateButtonText: {
     fontSize: 16,
-    color: '#111827',
     fontWeight: '500',
   },
   dateButtonIcon: {
@@ -315,7 +297,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   doneButton: {
-    backgroundColor: '#10B981',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -324,7 +305,6 @@ const styles = StyleSheet.create({
   doneButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
   scanInstructions: {
     alignItems: 'center',
@@ -337,21 +317,17 @@ const styles = StyleSheet.create({
   scanInstructionsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
     marginBottom: 8,
     textAlign: 'center',
   },
   scanInstructionsText: {
     fontSize: 14,
-    color: '#6B7280',
     textAlign: 'center',
     marginBottom: 12,
     lineHeight: 20,
   },
   scanInstructionsNote: {
     fontSize: 12,
-    color: '#F59E0B',
-    backgroundColor: '#FEF3C7',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,

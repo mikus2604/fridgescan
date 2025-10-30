@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Text, View, StyleSheet, Pressable } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 // Simple icon component (we'll use emojis for now)
 function TabBarIcon({ name }: { name: string }) {
@@ -12,6 +13,7 @@ function CustomAddButton() {
   const router = useRouter();
   const pathname = usePathname();
   const isActive = pathname === '/add';
+  const { colors } = useTheme();
 
   return (
     <Pressable
@@ -22,8 +24,8 @@ function CustomAddButton() {
       ]}
     >
       <View style={[styles.addButton, isActive && styles.addButtonActive]}>
-        <View style={styles.addButtonGlow} />
-        <View style={styles.addButtonGlass}>
+        <View style={[styles.addButtonGlow, { backgroundColor: colors.primary, shadowColor: colors.primary }]} />
+        <View style={[styles.addButtonGlass, { backgroundColor: `${colors.primary}D9` }]}>
           <Text style={styles.addButtonIcon}>+</Text>
           <Text style={styles.addButtonLabel}>Add</Text>
         </View>
@@ -33,18 +35,20 @@ function CustomAddButton() {
 }
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#10B981',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textTertiary,
         headerStyle: {
-          backgroundColor: '#F9FAFB',
+          backgroundColor: colors.backgroundSecondary,
         },
-        headerTintColor: '#111827',
+        headerTintColor: colors.text,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E5E7EB',
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
           height: 80,
           paddingBottom: 10,
           paddingTop: 10,
@@ -116,8 +120,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 40,
-    backgroundColor: '#10B981',
-    shadowColor: '#10B981',
     shadowOffset: {
       width: 0,
       height: 8,
@@ -130,7 +132,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 40,
-    backgroundColor: 'rgba(16, 185, 129, 0.85)',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',

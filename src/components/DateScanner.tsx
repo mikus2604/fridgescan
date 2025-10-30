@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator } from 'rea
 import { useState, useRef } from 'react';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { extractTextFromImage, formatDate } from '../services/ocrService';
+import { useTheme } from '../theme/ThemeContext';
 
 interface DateScannerProps {
   onDateScanned: (date: Date) => void;
@@ -9,6 +10,7 @@ interface DateScannerProps {
 }
 
 export default function DateScanner({ onDateScanned, onClose }: DateScannerProps) {
+  const { colors } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [isProcessing, setIsProcessing] = useState(false);
   const cameraRef = useRef<any>(null);
@@ -16,7 +18,7 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
   if (!permission) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#10B981" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -24,17 +26,17 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
   if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <View style={styles.permissionContainer}>
+        <View style={[styles.permissionContainer, { backgroundColor: colors.background }]}>
           <Text style={styles.permissionIcon}>📷</Text>
-          <Text style={styles.permissionTitle}>Camera Permission Required</Text>
-          <Text style={styles.permissionText}>
+          <Text style={[styles.permissionTitle, { color: colors.text }]}>Camera Permission Required</Text>
+          <Text style={[styles.permissionText, { color: colors.textSecondary }]}>
             We need access to your camera to scan expiry dates from product labels
           </Text>
-          <Pressable style={styles.permissionButton} onPress={requestPermission}>
+          <Pressable style={[styles.permissionButton, { backgroundColor: colors.primary }]} onPress={requestPermission}>
             <Text style={styles.permissionButtonText}>Grant Permission</Text>
           </Pressable>
           <Pressable style={styles.cancelButton} onPress={onClose}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
           </Pressable>
         </View>
       </View>
@@ -165,10 +167,10 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
 
           {/* Scanning Frame */}
           <View style={styles.scanFrame}>
-            <View style={[styles.corner, styles.cornerTopLeft]} />
-            <View style={[styles.corner, styles.cornerTopRight]} />
-            <View style={[styles.corner, styles.cornerBottomLeft]} />
-            <View style={[styles.corner, styles.cornerBottomRight]} />
+            <View style={[styles.corner, styles.cornerTopLeft, { borderColor: colors.primary }]} />
+            <View style={[styles.corner, styles.cornerTopRight, { borderColor: colors.primary }]} />
+            <View style={[styles.corner, styles.cornerBottomLeft, { borderColor: colors.primary }]} />
+            <View style={[styles.corner, styles.cornerBottomRight, { borderColor: colors.primary }]} />
             <Text style={styles.scanFrameText}>📅 Position date here</Text>
           </View>
 
@@ -182,18 +184,18 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
             ) : (
               <>
                 <Pressable
-                  style={styles.captureButton}
+                  style={[styles.captureButton, { borderColor: colors.primary }]}
                   onPress={takePicture}
                   disabled={isProcessing}
                 >
-                  <View style={styles.captureButtonInner} />
+                  <View style={[styles.captureButtonInner, { backgroundColor: colors.primary }]} />
                 </Pressable>
                 <Text style={styles.captureHint}>Tap to capture</Text>
               </>
             )}
 
             <Pressable
-              style={styles.closeButton}
+              style={[styles.closeButton, { backgroundColor: colors.danger }]}
               onPress={onClose}
               disabled={isProcessing}
             >
@@ -264,7 +266,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 40,
     height: 40,
-    borderColor: '#10B981',
     borderWidth: 3,
   },
   cornerTopLeft: {
@@ -312,13 +313,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: '#10B981',
   },
   captureButtonInner: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#10B981',
   },
   captureHint: {
     fontSize: 14,
@@ -332,7 +331,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: 'rgba(239, 68, 68, 0.9)',
     borderRadius: 8,
   },
   closeButtonText: {
@@ -373,7 +371,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#F9FAFB',
   },
   permissionIcon: {
     fontSize: 64,
@@ -382,19 +379,16 @@ const styles = StyleSheet.create({
   permissionTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#111827',
     marginBottom: 12,
     textAlign: 'center',
   },
   permissionText: {
     fontSize: 16,
-    color: '#6B7280',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 24,
   },
   permissionButton: {
-    backgroundColor: '#10B981',
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 12,
@@ -412,6 +406,5 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6B7280',
   },
 });

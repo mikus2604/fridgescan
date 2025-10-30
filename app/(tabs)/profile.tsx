@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Switch } from 'react-native';
 import { useInventoryStore } from '../../src/store/inventoryStore';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 export default function ProfileScreen() {
   const items = useInventoryStore((state) => state.items);
   const getExpiryStatus = useInventoryStore((state) => state.getExpiryStatus);
+  const { theme, colors, toggleTheme } = useTheme();
 
   // Calculate statistics
   const totalItems = items.length;
@@ -18,50 +20,50 @@ export default function ProfileScreen() {
   ).length;
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
         {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
+        <View style={[styles.profileHeader, { backgroundColor: colors.surface }]}>
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
             <Text style={styles.avatarText}>👤</Text>
           </View>
-          <Text style={styles.userName}>Demo User</Text>
-          <Text style={styles.userEmail}>demo@fridgescan.app</Text>
+          <Text style={[styles.userName, { color: colors.text }]}>Demo User</Text>
+          <Text style={[styles.userEmail, { color: colors.textSecondary }]}>demo@fridgescan.app</Text>
         </View>
 
         {/* Statistics */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Statistics</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Statistics</Text>
 
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Total Items</Text>
-              <Text style={styles.statValue}>{totalItems}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Items</Text>
+              <Text style={[styles.statValue, { color: colors.primary }]}>{totalItems}</Text>
             </View>
           </View>
 
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Expired Items</Text>
-              <Text style={[styles.statValue, { color: '#991B1B' }]}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Expired Items</Text>
+              <Text style={[styles.statValue, { color: colors.statusExpired }]}>
                 {expiredItems}
               </Text>
             </View>
           </View>
 
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Critical (1-3 days)</Text>
-              <Text style={[styles.statValue, { color: '#EF4444' }]}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Critical (1-3 days)</Text>
+              <Text style={[styles.statValue, { color: colors.statusCritical }]}>
                 {criticalItems}
               </Text>
             </View>
           </View>
 
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Warning (4-7 days)</Text>
-              <Text style={[styles.statValue, { color: '#F59E0B' }]}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Warning (4-7 days)</Text>
+              <Text style={[styles.statValue, { color: colors.statusWarning }]}>
                 {warningItems}
               </Text>
             </View>
@@ -70,36 +72,54 @@ export default function ProfileScreen() {
 
         {/* Settings (Placeholder) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
 
-          <Pressable style={styles.settingItem}>
-            <Text style={styles.settingText}>🔔 Notifications</Text>
-            <Text style={styles.settingArrow}>›</Text>
+          {/* Dark Mode Toggle */}
+          <View style={[styles.settingItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <View style={styles.settingTextContainer}>
+              <Text style={[styles.settingText, { color: colors.text }]}>
+                {theme === 'dark' ? '🌙' : '☀️'} Dark Mode
+              </Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                {theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+              </Text>
+            </View>
+            <Switch
+              value={theme === 'dark'}
+              onValueChange={toggleTheme}
+              trackColor={{ false: colors.buttonBackground, true: colors.primary }}
+              thumbColor={colors.surface}
+            />
+          </View>
+
+          <Pressable style={[styles.settingItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <Text style={[styles.settingText, { color: colors.text }]}>🔔 Notifications</Text>
+            <Text style={[styles.settingArrow, { color: colors.textTertiary }]}>›</Text>
           </Pressable>
 
-          <Pressable style={styles.settingItem}>
-            <Text style={styles.settingText}>👥 Household</Text>
-            <Text style={styles.settingArrow}>›</Text>
+          <Pressable style={[styles.settingItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <Text style={[styles.settingText, { color: colors.text }]}>👥 Household</Text>
+            <Text style={[styles.settingArrow, { color: colors.textTertiary }]}>›</Text>
           </Pressable>
 
-          <Pressable style={styles.settingItem}>
-            <Text style={styles.settingText}>⚙️ Preferences</Text>
-            <Text style={styles.settingArrow}>›</Text>
+          <Pressable style={[styles.settingItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <Text style={[styles.settingText, { color: colors.text }]}>⚙️ Preferences</Text>
+            <Text style={[styles.settingArrow, { color: colors.textTertiary }]}>›</Text>
           </Pressable>
 
-          <Pressable style={styles.settingItem}>
-            <Text style={styles.settingText}>❓ Help & Support</Text>
-            <Text style={styles.settingArrow}>›</Text>
+          <Pressable style={[styles.settingItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+            <Text style={[styles.settingText, { color: colors.text }]}>❓ Help & Support</Text>
+            <Text style={[styles.settingArrow, { color: colors.textTertiary }]}>›</Text>
           </Pressable>
         </View>
 
         {/* About */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <View style={styles.aboutCard}>
-            <Text style={styles.aboutTitle}>FridgeScan MVP</Text>
-            <Text style={styles.aboutVersion}>Version 0.1.0</Text>
-            <Text style={styles.aboutDescription}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
+          <View style={[styles.aboutCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.aboutTitle, { color: colors.text }]}>FridgeScan MVP</Text>
+            <Text style={[styles.aboutVersion, { color: colors.textSecondary }]}>Version 0.1.0</Text>
+            <Text style={[styles.aboutDescription, { color: colors.textSecondary }]}>
               Cross-platform inventory management app for tracking food items and
               reducing food waste.
             </Text>
@@ -107,9 +127,9 @@ export default function ProfileScreen() {
         </View>
 
         {/* Future Features Note */}
-        <View style={styles.featureNote}>
-          <Text style={styles.featureNoteTitle}>🚧 Coming Soon:</Text>
-          <Text style={styles.featureNoteText}>
+        <View style={[styles.featureNote, { backgroundColor: colors.warningBackground, borderLeftColor: colors.warning }]}>
+          <Text style={[styles.featureNoteTitle, { color: theme === 'dark' ? colors.warning : '#92400E' }]}>🚧 Coming Soon:</Text>
+          <Text style={[styles.featureNoteText, { color: theme === 'dark' ? colors.textSecondary : '#78350F' }]}>
             • User authentication (sign up/login){'\n'}
             • Push notifications for expiry alerts{'\n'}
             • Household sharing and collaboration{'\n'}
@@ -202,7 +222,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 8,
     marginBottom: 8,
@@ -212,13 +231,19 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
+  settingTextContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
   settingText: {
     fontSize: 16,
-    color: '#374151',
+    marginBottom: 2,
+  },
+  settingDescription: {
+    fontSize: 13,
   },
   settingArrow: {
     fontSize: 24,
-    color: '#9CA3AF',
   },
   aboutCard: {
     backgroundColor: '#FFFFFF',

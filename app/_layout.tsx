@@ -2,9 +2,11 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useInventoryStore } from '../src/store/inventoryStore';
+import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
 
-export default function RootLayout() {
+function RootLayoutContent() {
   const loadData = useInventoryStore((state) => state.loadData);
+  const { theme, colors } = useTheme();
 
   useEffect(() => {
     loadData();
@@ -12,7 +14,7 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="auto" />
+      <StatusBar style={colors.statusBarStyle} />
       <Stack>
         <Stack.Screen
           name="(tabs)"
@@ -20,5 +22,13 @@ export default function RootLayout() {
         />
       </Stack>
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutContent />
+    </ThemeProvider>
   );
 }

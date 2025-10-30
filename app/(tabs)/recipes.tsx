@@ -1,10 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useState, useMemo } from 'react';
 import { useInventoryStore } from '../../src/store/inventoryStore';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 export default function RecipesScreen() {
   const items = useInventoryStore((state) => state.items);
   const getExpiryStatus = useInventoryStore((state) => state.getExpiryStatus);
+  const { theme, colors } = useTheme();
 
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -56,25 +58,25 @@ export default function RecipesScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <Text style={styles.headerText}>Recipe Suggestions</Text>
-        <Text style={styles.subHeaderText}>
+        <Text style={[styles.headerText, { color: colors.text }]}>Recipe Suggestions</Text>
+        <Text style={[styles.subHeaderText, { color: colors.textSecondary }]}>
           Get recipe ideas based on items expiring soon
         </Text>
 
         {/* Items Expiring Soon Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Items Expiring Soon</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Items Expiring Soon</Text>
           {itemsExpiringSoon.length === 0 ? (
-            <View style={styles.emptyCard}>
+            <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
               <Text style={styles.emptyIcon}>✅</Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                 No items expiring in the next 7 days
               </Text>
             </View>
           ) : (
-            <View style={styles.ingredientsCard}>
+            <View style={[styles.ingredientsCard, { backgroundColor: colors.surface }]}>
               {itemsExpiringSoon.map((item) => {
                 const status = getExpiryStatus(item.bestBeforeDate);
                 return (
@@ -85,10 +87,10 @@ export default function RecipesScreen() {
                         { backgroundColor: status.color },
                       ]}
                     />
-                    <Text style={styles.ingredientText}>
+                    <Text style={[styles.ingredientText, { color: colors.textSecondary }]}>
                       {item.productName}
                       {item.brand && (
-                        <Text style={styles.brandText}> · {item.brand}</Text>
+                        <Text style={[styles.brandText, { color: colors.textTertiary }]}> · {item.brand}</Text>
                       )}
                     </Text>
                     <Text style={[styles.daysText, { color: status.color }]}>
@@ -105,19 +107,20 @@ export default function RecipesScreen() {
         <Pressable
           style={[
             styles.generateButton,
+            { backgroundColor: colors.primary },
             (isGenerating || itemsExpiringSoon.length === 0) &&
-              styles.generateButtonDisabled,
+              [styles.generateButtonDisabled, { backgroundColor: colors.border }],
           ]}
           onPress={handleGenerateRecipes}
           disabled={isGenerating || itemsExpiringSoon.length === 0}
         >
           {isGenerating ? (
             <>
-              <ActivityIndicator color="#FFFFFF" size="small" />
-              <Text style={styles.generateButtonText}>Generating...</Text>
+              <ActivityIndicator color={colors.surface} size="small" />
+              <Text style={[styles.generateButtonText, { color: colors.surface }]}>Generating...</Text>
             </>
           ) : (
-            <Text style={styles.generateButtonText}>
+            <Text style={[styles.generateButtonText, { color: colors.surface }]}>
               ✨ Generate Recipe Ideas
             </Text>
           )}
@@ -125,39 +128,39 @@ export default function RecipesScreen() {
 
         {/* Recipe Suggestions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Suggested Recipes</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Suggested Recipes</Text>
           {mockRecipes.map((recipe) => (
-            <View key={recipe.id} style={styles.recipeCard}>
-              <Text style={styles.recipeName}>{recipe.name}</Text>
+            <View key={recipe.id} style={[styles.recipeCard, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.recipeName, { color: colors.text }]}>{recipe.name}</Text>
               <View style={styles.recipeMetaContainer}>
                 <View style={styles.recipeMeta}>
                   <Text style={styles.recipeMetaIcon}>⏱️</Text>
-                  <Text style={styles.recipeMetaText}>{recipe.cookTime}</Text>
+                  <Text style={[styles.recipeMetaText, { color: colors.textSecondary }]}>{recipe.cookTime}</Text>
                 </View>
                 <View style={styles.recipeMeta}>
                   <Text style={styles.recipeMetaIcon}>👨‍🍳</Text>
-                  <Text style={styles.recipeMetaText}>{recipe.difficulty}</Text>
+                  <Text style={[styles.recipeMetaText, { color: colors.textSecondary }]}>{recipe.difficulty}</Text>
                 </View>
               </View>
-              <Text style={styles.recipeDescription}>{recipe.description}</Text>
+              <Text style={[styles.recipeDescription, { color: colors.textSecondary }]}>{recipe.description}</Text>
               <View style={styles.ingredientsTagContainer}>
                 {recipe.ingredients.map((ingredient, index) => (
-                  <View key={index} style={styles.ingredientTag}>
-                    <Text style={styles.ingredientTagText}>{ingredient}</Text>
+                  <View key={index} style={[styles.ingredientTag, { backgroundColor: colors.infoBackground }]}>
+                    <Text style={[styles.ingredientTagText, { color: colors.info }]}>{ingredient}</Text>
                   </View>
                 ))}
               </View>
-              <Pressable style={styles.viewRecipeButton}>
-                <Text style={styles.viewRecipeButtonText}>View Recipe</Text>
+              <Pressable style={[styles.viewRecipeButton, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.viewRecipeButtonText, { color: colors.surface }]}>View Recipe</Text>
               </Pressable>
             </View>
           ))}
         </View>
 
         {/* Feature Note */}
-        <View style={styles.featureNote}>
-          <Text style={styles.featureNoteTitle}>🚧 Coming Soon:</Text>
-          <Text style={styles.featureNoteText}>
+        <View style={[styles.featureNote, { backgroundColor: colors.warningBackground, borderLeftColor: colors.warning }]}>
+          <Text style={[styles.featureNoteTitle, { color: theme === 'dark' ? colors.warning : '#92400E' }]}>🚧 Coming Soon:</Text>
+          <Text style={[styles.featureNoteText, { color: theme === 'dark' ? colors.textSecondary : '#78350F' }]}>
             • AI-powered recipe suggestions using OpenAI/Claude{'\n'}
             • Personalized recipes based on dietary preferences{'\n'}
             • Save favorite recipes{'\n'}

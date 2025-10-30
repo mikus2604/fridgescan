@@ -3,8 +3,10 @@ import { useState, useMemo } from 'react';
 import { useInventoryStore, InventoryItem } from '../../src/store/inventoryStore';
 import EditItemModal from '../../src/components/EditItemModal';
 import UseSomeModal from '../../src/components/UseSomeModal';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const items = useInventoryStore((state) => state.items);
   const getExpiryStatus = useInventoryStore((state) => state.getExpiryStatus);
   const removeItem = useInventoryStore((state) => state.removeItem);
@@ -18,6 +20,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterLocation, setFilterLocation] = useState<string | null>(null);
+  const [filterExpiry, setFilterExpiry] = useState<'all' | 'expiring' | 'expired' | null>(null);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -45,11 +48,25 @@ export default function HomeScreen() {
       filtered = filtered.filter((item) => item.storageLocation === filterLocation);
     }
 
+    // Apply expiry filter
+    if (filterExpiry === 'expiring') {
+      filtered = filtered.filter((item) => {
+        const { daysUntilExpiry } = getExpiryStatus(item.bestBeforeDate);
+        return daysUntilExpiry >= 0 && daysUntilExpiry <= 3;
+      });
+    } else if (filterExpiry === 'expired') {
+      filtered = filtered.filter((item) => {
+        const { daysUntilExpiry } = getExpiryStatus(item.bestBeforeDate);
+        return daysUntilExpiry < 0;
+      });
+    }
+    // 'all' or null shows all items (no additional filter)
+
     // Sort by expiry date (soonest first)
     return [...filtered].sort(
       (a, b) => a.bestBeforeDate.getTime() - b.bestBeforeDate.getTime()
     );
-  }, [items, searchQuery, filterLocation]);
+  }, [items, searchQuery, filterLocation, filterExpiry, getExpiryStatus]);
 
   // Get unique locations for filter
   const locations = useMemo(() => {
@@ -75,10 +92,10 @@ export default function HomeScreen() {
 
   if (items.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
+      <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
         <Text style={styles.emptyIcon}>📦</Text>
-        <Text style={styles.emptyTitle}>No items yet</Text>
-        <Text style={styles.emptyText}>
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>No items yet</Text>
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
           Tap the + button below to add your first item
         </Text>
       </View>
@@ -87,24 +104,24 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#10B981']} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
       }
     >
       <View style={styles.content}>
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.text }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search items..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textTertiary}
           />
           {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery('')} style={styles.clearButton}>
-              <Text style={styles.clearButtonText}>✕</Text>
+            <Pressable onPress={() => setSearchQuery('')} style={[styles.clearButton, { backgroundColor: colors.border }]}>
+              <Text style={[styles.clearButtonText, { color: colors.textSecondary }]}>✕</Text>
             </Pressable>
           )}
         </View>
@@ -120,13 +137,15 @@ export default function HomeScreen() {
             <Pressable
               style={[
                 styles.filterChip,
-                filterLocation === null && styles.filterChipActive,
+                { backgroundColor: colors.surface, borderColor: colors.borderSecondary },
+                filterLocation === null && { backgroundColor: colors.primary, borderColor: colors.primary },
               ]}
               onPress={() => setFilterLocation(null)}
             >
               <Text
                 style={[
                   styles.filterChipText,
+                  { color: colors.textSecondary },
                   filterLocation === null && styles.filterChipTextActive,
                 ]}
               >
@@ -138,13 +157,15 @@ export default function HomeScreen() {
                 key={location}
                 style={[
                   styles.filterChip,
-                  filterLocation === location && styles.filterChipActive,
+                  { backgroundColor: colors.surface, borderColor: colors.borderSecondary },
+                  filterLocation === location && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
                 onPress={() => setFilterLocation(location)}
               >
                 <Text
                   style={[
                     styles.filterChipText,
+                    { color: colors.textSecondary },
                     filterLocation === location && styles.filterChipTextActive,
                   ]}
                 >
@@ -155,36 +176,70 @@ export default function HomeScreen() {
           </ScrollView>
         )}
 
-        {/* Summary Stats */}
+        {/* Summary Stats - Now function as filters */}
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{items.length}</Text>
-            <Text style={styles.statLabel}>Total Items</Text>
-          </View>
-          <View style={styles.statCard}>
+          <Pressable
+            style={[
+              styles.statCard,
+              { backgroundColor: colors.surface },
+              filterExpiry === null && styles.statCardActive,
+              filterExpiry === null && { borderColor: colors.primary, borderWidth: 2 }
+            ]}
+            onPress={() => setFilterExpiry(null)}
+          >
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{items.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>All Items</Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.statCard,
+              { backgroundColor: colors.surface },
+              filterExpiry === 'expiring' && styles.statCardActive,
+              filterExpiry === 'expiring' && { borderColor: '#EF4444', borderWidth: 2 }
+            ]}
+            onPress={() => setFilterExpiry(filterExpiry === 'expiring' ? null : 'expiring')}
+          >
             <Text style={[styles.statNumber, { color: '#EF4444' }]}>
-              {items.filter((item) => getExpiryStatus(item.bestBeforeDate).daysUntilExpiry <= 3).length}
+              {items.filter((item) => {
+                const { daysUntilExpiry } = getExpiryStatus(item.bestBeforeDate);
+                return daysUntilExpiry >= 0 && daysUntilExpiry <= 3;
+              }).length}
             </Text>
-            <Text style={styles.statLabel}>Expiring Soon</Text>
-          </View>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Expiring Soon</Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.statCard,
+              { backgroundColor: colors.surface },
+              filterExpiry === 'expired' && styles.statCardActive,
+              filterExpiry === 'expired' && { borderColor: '#991B1B', borderWidth: 2 }
+            ]}
+            onPress={() => setFilterExpiry(filterExpiry === 'expired' ? null : 'expired')}
+          >
+            <Text style={[styles.statNumber, { color: '#991B1B' }]}>
+              {items.filter((item) => getExpiryStatus(item.bestBeforeDate).daysUntilExpiry < 0).length}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Expired</Text>
+          </Pressable>
         </View>
 
         {/* Items List */}
-        <Text style={styles.sectionTitle}>
-          {searchQuery || filterLocation ? 'Filtered Results' : 'Your Inventory'}
-          {(searchQuery || filterLocation) && (
-            <Text style={styles.resultCount}> ({filteredAndSortedItems.length})</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          {searchQuery || filterLocation || filterExpiry ? 'Filtered Results' : 'Your Inventory'}
+          {(searchQuery || filterLocation || filterExpiry) && (
+            <Text style={[styles.resultCount, { color: colors.textSecondary }]}> ({filteredAndSortedItems.length})</Text>
           )}
         </Text>
-        {filteredAndSortedItems.length === 0 && (searchQuery || filterLocation) ? (
+        {filteredAndSortedItems.length === 0 && (searchQuery || filterLocation || filterExpiry) ? (
           <View style={styles.noResultsContainer}>
-            <Text style={styles.noResultsText}>No items found</Text>
+            <Text style={[styles.noResultsText, { color: colors.textSecondary }]}>No items found</Text>
             <Pressable
               onPress={() => {
                 setSearchQuery('');
                 setFilterLocation(null);
+                setFilterExpiry(null);
               }}
-              style={styles.clearFiltersButton}
+              style={[styles.clearFiltersButton, { backgroundColor: colors.primary }]}
             >
               <Text style={styles.clearFiltersText}>Clear filters</Text>
             </Pressable>
@@ -194,15 +249,15 @@ export default function HomeScreen() {
           const { color, daysUntilExpiry, status } = getExpiryStatus(item.bestBeforeDate);
 
           return (
-            <View key={item.id} style={[styles.itemCard, { borderLeftColor: color }]}>
+            <View key={item.id} style={[styles.itemCard, { backgroundColor: colors.surface, borderLeftColor: color }]}>
               {/* Item Header */}
               <View style={styles.itemHeader}>
                 <View style={styles.itemTitleContainer}>
-                  <Text style={styles.itemName}>{item.productName}</Text>
-                  {item.brand && <Text style={styles.itemBrand}>{item.brand}</Text>}
+                  <Text style={[styles.itemName, { color: colors.text }]}>{item.productName}</Text>
+                  {item.brand && <Text style={[styles.itemBrand, { color: colors.textSecondary }]}>{item.brand}</Text>}
                 </View>
-                <View style={styles.locationBadge}>
-                  <Text style={styles.locationText}>
+                <View style={[styles.locationBadge, { backgroundColor: colors.buttonBackground }]}>
+                  <Text style={[styles.locationText, { color: colors.text }]}>
                     {item.storageLocation === 'Fridge' ? '❄️' : '🏪'}{' '}
                     {item.storageLocation}
                   </Text>
@@ -212,13 +267,13 @@ export default function HomeScreen() {
               {/* Item Details */}
               <View style={styles.itemDetails}>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Items:</Text>
-                  <Text style={styles.detailValue}>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Items:</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>
                     {item.itemCount} × {item.quantity} {item.quantityUnit}
                   </Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Best Before:</Text>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Best Before:</Text>
                   <Text style={[styles.expiryText, { color }]}>
                     {formatExpiryText(daysUntilExpiry)}
                   </Text>
@@ -243,13 +298,13 @@ export default function HomeScreen() {
               {/* Actions */}
               <View style={styles.actions}>
                 <Pressable
-                  style={styles.actionButton}
+                  style={[styles.actionButton, { backgroundColor: colors.buttonBackground }]}
                   onPress={() => {
                     setSelectedItem(item);
                     setUseSomeModalVisible(true);
                   }}
                 >
-                  <Text style={styles.actionButtonText}>Use Some</Text>
+                  <Text style={[styles.actionButtonText, { color: colors.text }]}>Use Some</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionButton, styles.editButton]}
@@ -321,7 +376,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
   content: {
     padding: 16,
@@ -331,14 +385,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   searchInput: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
     paddingRight: 40,
   },
   clearButton: {
@@ -348,13 +399,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#E5E7EB',
     justifyContent: 'center',
     alignItems: 'center',
   },
   clearButtonText: {
     fontSize: 14,
-    color: '#6B7280',
   },
   filterContainer: {
     marginBottom: 16,
@@ -365,25 +414,19 @@ const styles = StyleSheet.create({
   filterChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
   },
   filterChipActive: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
   },
   filterChipText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
   },
   filterChipTextActive: {
     color: '#FFFFFF',
   },
   resultCount: {
-    color: '#6B7280',
     fontWeight: '400',
   },
   noResultsContainer: {
@@ -392,13 +435,11 @@ const styles = StyleSheet.create({
   },
   noResultsText: {
     fontSize: 16,
-    color: '#6B7280',
     marginBottom: 12,
   },
   clearFiltersButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#10B981',
     borderRadius: 8,
   },
   clearFiltersText: {
@@ -411,7 +452,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
-    backgroundColor: '#F9FAFB',
   },
   emptyIcon: {
     fontSize: 64,
@@ -420,12 +460,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#111827',
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
-    color: '#6B7280',
     textAlign: 'center',
   },
   statsContainer: {
@@ -435,7 +473,6 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -445,24 +482,27 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  statCardActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   statNumber: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#10B981',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: '#6B7280',
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#111827',
     marginBottom: 16,
   },
   itemCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -485,22 +525,18 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
     marginBottom: 2,
   },
   itemBrand: {
     fontSize: 14,
-    color: '#6B7280',
   },
   locationBadge: {
-    backgroundColor: '#F3F4F6',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   locationText: {
     fontSize: 12,
-    color: '#4B5563',
     fontWeight: '500',
   },
   itemDetails: {
@@ -513,11 +549,9 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: '#6B7280',
   },
   detailValue: {
     fontSize: 14,
-    color: '#111827',
     fontWeight: '500',
   },
   expiryText: {
@@ -542,7 +576,6 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -557,6 +590,5 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4B5563',
   },
 });

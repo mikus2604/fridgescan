@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { InventoryItem } from '../store/inventoryStore';
 import DateInputOptions from './DateInputOptions';
 import DateScanner from './DateScanner';
+import { useTheme } from '../theme/ThemeContext';
 
 interface EditItemModalProps {
   visible: boolean;
@@ -26,6 +27,7 @@ export default function EditItemModal({
   onClose,
   onSave,
 }: EditItemModalProps) {
+  const { colors } = useTheme();
   const [productName, setProductName] = useState('');
   const [brand, setBrand] = useState('');
   const [itemCount, setItemCount] = useState('');
@@ -112,64 +114,64 @@ export default function EditItemModal({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Header */}
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Edit Item</Text>
-            <Pressable onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Edit Item</Text>
+            <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.buttonBackground }]}>
+              <Text style={[styles.closeButtonText, { color: colors.textSecondary }]}>✕</Text>
             </Pressable>
           </View>
 
           <ScrollView style={styles.scrollContent}>
             {/* Product Name */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Product Name *</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Product Name *</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.text }]}
                 value={productName}
                 onChangeText={setProductName}
                 placeholder="e.g., Milk, Chicken Breast"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textTertiary}
               />
             </View>
 
             {/* Brand */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Brand</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Brand</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.text }]}
                 value={brand}
                 onChangeText={setBrand}
                 placeholder="Optional"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textTertiary}
               />
             </View>
 
             {/* Item Count */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Number of Items *</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Number of Items *</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.text }]}
                 value={itemCount}
                 onChangeText={setItemCount}
                 placeholder="1"
                 keyboardType="number-pad"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textTertiary}
               />
             </View>
 
             {/* Quantity */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Quantity per Item *</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Quantity per Item *</Text>
               <View style={styles.quantityContainer}>
                 <TextInput
-                  style={[styles.input, styles.quantityInput]}
+                  style={[styles.input, styles.quantityInput, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.text }]}
                   value={quantity}
                   onChangeText={setQuantity}
                   placeholder="1"
                   keyboardType="decimal-pad"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textTertiary}
                 />
                 <ScrollView
                   horizontal
@@ -181,6 +183,7 @@ export default function EditItemModal({
                       key={unit}
                       style={[
                         styles.unitButton,
+                        { backgroundColor: colors.buttonBackground },
                         quantityUnit === unit && styles.unitButtonActive,
                       ]}
                       onPress={() => setQuantityUnit(unit)}
@@ -188,6 +191,7 @@ export default function EditItemModal({
                       <Text
                         style={[
                           styles.unitButtonText,
+                          { color: colors.textSecondary },
                           quantityUnit === unit && styles.unitButtonTextActive,
                         ]}
                       >
@@ -201,13 +205,14 @@ export default function EditItemModal({
 
             {/* Storage Location */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Storage Location *</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Storage Location *</Text>
               <View style={styles.locationContainer}>
                 {locations.map((location) => (
                   <Pressable
                     key={location}
                     style={[
                       styles.locationButton,
+                      { backgroundColor: colors.buttonBackground },
                       storageLocation === location && styles.locationButtonActive,
                     ]}
                     onPress={() => setStorageLocation(location)}
@@ -215,6 +220,7 @@ export default function EditItemModal({
                     <Text
                       style={[
                         styles.locationButtonText,
+                        { color: colors.textSecondary },
                         storageLocation === location &&
                           styles.locationButtonTextActive,
                       ]}
@@ -233,29 +239,29 @@ export default function EditItemModal({
 
             {/* Purchase Date */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Purchase Date</Text>
-              <View style={styles.dateContainer}>
-                <Text style={styles.dateText}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Purchase Date</Text>
+              <View style={[styles.dateContainer, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder }]}>
+                <Text style={[styles.dateText, { color: colors.text }]}>
                   {formatDateForDisplay(purchaseDate)}
                 </Text>
                 <View style={styles.dateAdjustButtons}>
                   <Pressable
-                    style={styles.dateAdjustButton}
+                    style={[styles.dateAdjustButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
                     onPress={() => setPurchaseDate(adjustDate(purchaseDate, -1))}
                   >
-                    <Text style={styles.dateAdjustButtonText}>-1d</Text>
+                    <Text style={[styles.dateAdjustButtonText, { color: colors.textSecondary }]}>-1d</Text>
                   </Pressable>
                   <Pressable
-                    style={styles.dateAdjustButton}
+                    style={[styles.dateAdjustButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
                     onPress={() => setPurchaseDate(adjustDate(purchaseDate, 1))}
                   >
-                    <Text style={styles.dateAdjustButtonText}>+1d</Text>
+                    <Text style={[styles.dateAdjustButtonText, { color: colors.textSecondary }]}>+1d</Text>
                   </Pressable>
                   <Pressable
-                    style={[styles.dateAdjustButton, styles.todayButton]}
+                    style={[styles.dateAdjustButton, styles.todayButton, { borderColor: colors.primary }]}
                     onPress={() => setPurchaseDate(new Date())}
                   >
-                    <Text style={styles.dateAdjustButtonText}>Today</Text>
+                    <Text style={[styles.dateAdjustButtonText, { color: colors.textSecondary }]}>Today</Text>
                   </Pressable>
                 </View>
               </View>
@@ -270,15 +276,15 @@ export default function EditItemModal({
           </ScrollView>
 
           {/* Action Buttons */}
-          <View style={styles.actionButtons}>
+          <View style={[styles.actionButtons, { borderTopColor: colors.border }]}>
             <Pressable
-              style={[styles.actionButton, styles.cancelButton]}
+              style={[styles.actionButton, styles.cancelButton, { backgroundColor: colors.buttonBackground }]}
               onPress={onClose}
             >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
             </Pressable>
             <Pressable
-              style={[styles.actionButton, styles.saveButton]}
+              style={[styles.actionButton, styles.saveButton, { backgroundColor: colors.primary }]}
               onPress={handleSave}
             >
               <Text style={styles.saveButtonText}>Save Changes</Text>
@@ -312,7 +318,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '90%',
@@ -325,24 +330,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
   },
   closeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButtonText: {
     fontSize: 20,
-    color: '#6B7280',
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -354,18 +355,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F9FAFB',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
   },
   quantityContainer: {
     gap: 12,
@@ -379,7 +376,6 @@ const styles = StyleSheet.create({
   unitButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#F3F4F6',
     borderRadius: 8,
     marginRight: 8,
   },
@@ -389,7 +385,6 @@ const styles = StyleSheet.create({
   unitButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4B5563',
   },
   unitButtonTextActive: {
     color: '#FFFFFF',
@@ -401,7 +396,6 @@ const styles = StyleSheet.create({
   locationButton: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: '#F3F4F6',
     borderRadius: 8,
     alignItems: 'center',
   },
@@ -411,22 +405,18 @@ const styles = StyleSheet.create({
   locationButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4B5563',
   },
   locationButtonTextActive: {
     color: '#FFFFFF',
   },
   dateContainer: {
-    backgroundColor: '#F9FAFB',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     borderRadius: 8,
     padding: 12,
   },
   dateText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
     marginBottom: 12,
   },
   dateAdjustButtons: {
@@ -435,29 +425,24 @@ const styles = StyleSheet.create({
   },
   dateAdjustButton: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     alignItems: 'center',
   },
   todayButton: {
     backgroundColor: '#DBEAFE',
-    borderColor: '#3B82F6',
   },
   dateAdjustButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
   },
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
   },
   actionButton: {
     flex: 1,
@@ -466,15 +451,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#F3F4F6',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6B7280',
   },
   saveButton: {
-    backgroundColor: '#10B981',
   },
   saveButtonText: {
     fontSize: 16,

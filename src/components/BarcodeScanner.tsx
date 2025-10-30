@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, Platform } from 'react-native';
 import { CameraView, Camera } from 'expo-camera';
 import { BarcodeScanningResult } from 'expo-camera';
+import { useTheme } from '../theme/ThemeContext';
 
 interface BarcodeScannerProps {
   onBarcodeScanned: (barcode: string) => void;
@@ -12,6 +13,7 @@ export default function BarcodeScanner({
   onBarcodeScanned,
   onClose,
 }: BarcodeScannerProps) {
+  const { colors } = useTheme();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isScanning, setIsScanning] = useState(true);
 
@@ -34,8 +36,8 @@ export default function BarcodeScanner({
   if (hasPermission === null) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#10B981" />
-        <Text style={styles.text}>Requesting camera permission...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.text, { color: colors.textSecondary }]}>Requesting camera permission...</Text>
       </View>
     );
   }
@@ -43,11 +45,11 @@ export default function BarcodeScanner({
   if (hasPermission === false) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>📷 Camera Permission Denied</Text>
-        <Text style={styles.text}>
+        <Text style={[styles.errorText, { color: colors.error }]}>📷 Camera Permission Denied</Text>
+        <Text style={[styles.text, { color: colors.textSecondary }]}>
           Please enable camera access in your device settings to scan barcodes.
         </Text>
-        <Pressable style={styles.button} onPress={onClose}>
+        <Pressable style={[styles.button, { backgroundColor: colors.primary }]} onPress={onClose}>
           <Text style={styles.buttonText}>Go Back</Text>
         </Pressable>
       </View>
@@ -58,11 +60,11 @@ export default function BarcodeScanner({
   if (Platform.OS === 'web') {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>📱 Web Not Supported</Text>
-        <Text style={styles.text}>
+        <Text style={[styles.errorText, { color: colors.error }]}>📱 Web Not Supported</Text>
+        <Text style={[styles.text, { color: colors.textSecondary }]}>
           Barcode scanning is only available on mobile devices. Please use the iOS or Android app.
         </Text>
-        <Pressable style={styles.button} onPress={onClose}>
+        <Pressable style={[styles.button, { backgroundColor: colors.primary }]} onPress={onClose}>
           <Text style={styles.buttonText}>Go Back</Text>
         </Pressable>
       </View>
@@ -99,10 +101,10 @@ export default function BarcodeScanner({
 
           {/* Scanning frame */}
           <View style={styles.scanFrame}>
-            <View style={[styles.corner, styles.topLeft]} />
-            <View style={[styles.corner, styles.topRight]} />
-            <View style={[styles.corner, styles.bottomLeft]} />
-            <View style={[styles.corner, styles.bottomRight]} />
+            <View style={[styles.corner, styles.topLeft, { borderColor: colors.primary }]} />
+            <View style={[styles.corner, styles.topRight, { borderColor: colors.primary }]} />
+            <View style={[styles.corner, styles.bottomLeft, { borderColor: colors.primary }]} />
+            <View style={[styles.corner, styles.bottomRight, { borderColor: colors.primary }]} />
           </View>
 
           {/* Instructions */}
@@ -167,7 +169,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 40,
     height: 40,
-    borderColor: '#10B981',
   },
   topLeft: {
     top: '30%',
@@ -206,7 +207,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 16,
-    color: '#D1D5DB',
     textAlign: 'center',
     marginTop: 16,
     paddingHorizontal: 32,
@@ -214,12 +214,10 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#EF4444',
     marginBottom: 8,
   },
   button: {
     marginTop: 24,
-    backgroundColor: '#10B981',
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,

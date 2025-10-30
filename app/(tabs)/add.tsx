@@ -6,10 +6,12 @@ import BarcodeScanner from '../../src/components/BarcodeScanner';
 import DateInputOptions from '../../src/components/DateInputOptions';
 import DateScanner from '../../src/components/DateScanner';
 import { fetchProductByBarcode, parseQuantity } from '../../src/services/barcodeService';
+import { useTheme } from '../../src/theme/ThemeContext';
 
 export default function AddItemScreen() {
   const router = useRouter();
   const addItem = useInventoryStore((state) => state.addItem);
+  const { colors, theme } = useTheme();
 
   const [productName, setProductName] = useState('');
   const [brand, setBrand] = useState('');
@@ -126,16 +128,16 @@ export default function AddItemScreen() {
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.content}>
-          <Text style={styles.headerText}>Add New Item</Text>
-          <Text style={styles.subHeaderText}>
+          <Text style={[styles.headerText, { color: colors.text }]}>Add New Item</Text>
+          <Text style={[styles.subHeaderText, { color: colors.textSecondary }]}>
             Scan a barcode or enter details manually
           </Text>
 
           {/* Barcode Scanner Button */}
           <Pressable
-            style={styles.scanButton}
+            style={[styles.scanButton, { backgroundColor: colors.primary }]}
             onPress={() => setShowScanner(true)}
             disabled={isLoadingProduct}
           >
@@ -145,8 +147,8 @@ export default function AddItemScreen() {
 
           {/* Scanned Barcode Badge */}
           {scannedBarcode && (
-            <View style={styles.barcodeBadge}>
-              <Text style={styles.barcodeBadgeText}>
+            <View style={[styles.barcodeBadge, { backgroundColor: colors.successBackground, borderColor: colors.primary }]}>
+              <Text style={[styles.barcodeBadgeText, { color: colors.primaryDark }]}>
                 ✓ Barcode: {scannedBarcode}
               </Text>
             </View>
@@ -154,69 +156,69 @@ export default function AddItemScreen() {
 
           {/* Loading Indicator */}
           {isLoadingProduct && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#10B981" />
-              <Text style={styles.loadingText}>Fetching product info...</Text>
+            <View style={[styles.loadingContainer, { backgroundColor: colors.buttonBackground }]}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Fetching product info...</Text>
             </View>
           )}
 
           <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Product Details</Text>
-            <View style={styles.dividerLine} />
+            <View style={[styles.dividerLine, { backgroundColor: colors.borderSecondary }]} />
+            <Text style={[styles.dividerText, { color: colors.textSecondary }]}>Product Details</Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.borderSecondary }]} />
           </View>
 
         {/* Product Name */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Product Name *</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Product Name *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.text }]}
             value={productName}
             onChangeText={setProductName}
             placeholder="e.g., Milk, Chicken Breast, Yogurt"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textTertiary}
           />
         </View>
 
         {/* Brand */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Brand (Optional)</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Brand (Optional)</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.text }]}
             value={brand}
             onChangeText={setBrand}
             placeholder="e.g., Organic Valley"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textTertiary}
           />
         </View>
 
         {/* Item Count */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Number of Items *</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Number of Items *</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.text }]}
             value={itemCount}
             onChangeText={setItemCount}
             placeholder="1"
             keyboardType="number-pad"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textTertiary}
           />
-          <Text style={styles.helperText}>
+          <Text style={[styles.helperText, { color: colors.textSecondary }]}>
             How many packages/items? (e.g., 2 bottles, 3 packs)
           </Text>
         </View>
 
         {/* Quantity */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Quantity per Item *</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Quantity per Item *</Text>
           <View style={styles.quantityContainer}>
             <TextInput
-              style={[styles.input, styles.quantityInput]}
+              style={[styles.input, styles.quantityInput, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.text }]}
               value={quantity}
               onChangeText={setQuantity}
               placeholder="1"
               keyboardType="decimal-pad"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textTertiary}
             />
             <ScrollView
               horizontal
@@ -228,13 +230,15 @@ export default function AddItemScreen() {
                   key={unit}
                   style={[
                     styles.unitButton,
-                    quantityUnit === unit && styles.unitButtonActive,
+                    { backgroundColor: colors.buttonBackground },
+                    quantityUnit === unit && [styles.unitButtonActive, { backgroundColor: colors.primary }],
                   ]}
                   onPress={() => setQuantityUnit(unit)}
                 >
                   <Text
                     style={[
                       styles.unitButtonText,
+                      { color: colors.textSecondary },
                       quantityUnit === unit && styles.unitButtonTextActive,
                     ]}
                   >
@@ -248,20 +252,22 @@ export default function AddItemScreen() {
 
         {/* Storage Location */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Storage Location *</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Storage Location *</Text>
           <View style={styles.locationContainer}>
             {locations.map((location) => (
               <Pressable
                 key={location}
                 style={[
                   styles.locationButton,
-                  storageLocation === location && styles.locationButtonActive,
+                  { backgroundColor: colors.buttonBackground },
+                  storageLocation === location && [styles.locationButtonActive, { backgroundColor: colors.primary }],
                 ]}
                 onPress={() => setStorageLocation(location)}
               >
                 <Text
                   style={[
                     styles.locationButtonText,
+                    { color: colors.textSecondary },
                     storageLocation === location && styles.locationButtonTextActive,
                   ]}
                 >
@@ -281,14 +287,14 @@ export default function AddItemScreen() {
         />
 
         {/* Add Button */}
-        <Pressable style={styles.addButton} onPress={handleAddItem}>
+        <Pressable style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={handleAddItem}>
           <Text style={styles.addButtonText}>➕ Add to Inventory</Text>
         </Pressable>
 
         {/* Future Features Note */}
-        <View style={styles.featureNote}>
-          <Text style={styles.featureNoteTitle}>🚧 Coming Soon:</Text>
-          <Text style={styles.featureNoteText}>
+        <View style={[styles.featureNote, { backgroundColor: colors.warningBackground, borderLeftColor: colors.warning }]}>
+          <Text style={[styles.featureNoteTitle, { color: theme === 'dark' ? colors.warning : '#92400E' }]}>🚧 Coming Soon:</Text>
+          <Text style={[styles.featureNoteText, { color: theme === 'dark' ? colors.textSecondary : '#78350F' }]}>
             • Photo capture for items{'\n'}
             • Custom storage locations{'\n'}
             • AI recipe suggestions{'\n'}
@@ -331,7 +337,6 @@ export default function AddItemScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
   content: {
     padding: 16,
@@ -339,12 +344,10 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#111827',
     marginBottom: 8,
   },
   subHeaderText: {
     fontSize: 16,
-    color: '#6B7280',
     marginBottom: 24,
   },
   formGroup: {
@@ -353,18 +356,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
   },
   quantityContainer: {
     gap: 12,
@@ -378,17 +377,14 @@ const styles = StyleSheet.create({
   unitButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#F3F4F6',
     borderRadius: 8,
     marginRight: 8,
   },
   unitButtonActive: {
-    backgroundColor: '#10B981',
   },
   unitButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4B5563',
   },
   unitButtonTextActive: {
     color: '#FFFFFF',
@@ -400,28 +396,23 @@ const styles = StyleSheet.create({
   locationButton: {
     flex: 1,
     paddingVertical: 12,
-    backgroundColor: '#F3F4F6',
     borderRadius: 8,
     alignItems: 'center',
   },
   locationButtonActive: {
-    backgroundColor: '#10B981',
   },
   locationButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4B5563',
   },
   locationButtonTextActive: {
     color: '#FFFFFF',
   },
   helperText: {
     fontSize: 14,
-    color: '#6B7280',
     marginTop: 4,
   },
   addButton: {
-    backgroundColor: '#10B981',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -439,25 +430,20 @@ const styles = StyleSheet.create({
   },
   featureNote: {
     marginTop: 24,
-    backgroundColor: '#FEF3C7',
     padding: 16,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
   },
   featureNoteTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#92400E',
     marginBottom: 8,
   },
   featureNoteText: {
     fontSize: 14,
-    color: '#78350F',
     lineHeight: 20,
   },
   scanButton: {
-    backgroundColor: '#10B981',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -481,22 +467,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   barcodeBadge: {
-    backgroundColor: '#D1FAE5',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#10B981',
   },
   barcodeBadgeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#065F46',
     textAlign: 'center',
   },
   loadingContainer: {
-    backgroundColor: '#F3F4F6',
     paddingVertical: 20,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -505,7 +487,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: '#6B7280',
     marginTop: 8,
   },
   divider: {
@@ -516,12 +497,10 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#D1D5DB',
   },
   dividerText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
     paddingHorizontal: 12,
   },
 });

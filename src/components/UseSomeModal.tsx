@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { InventoryItem } from '../store/inventoryStore';
+import { useTheme } from '../theme/ThemeContext';
 
 interface UseSomeModalProps {
   visible: boolean;
@@ -23,6 +24,7 @@ export default function UseSomeModal({
   onClose,
   onUseSome,
 }: UseSomeModalProps) {
+  const { colors } = useTheme();
   const [customAmount, setCustomAmount] = useState('');
   const [selectedFraction, setSelectedFraction] = useState<string | null>(null);
 
@@ -125,33 +127,34 @@ export default function UseSomeModal({
       onRequestClose={resetAndClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
           {/* Header */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Use Some</Text>
-            <Pressable onPress={resetAndClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Use Some</Text>
+            <Pressable onPress={resetAndClose} style={[styles.closeButton, { backgroundColor: colors.buttonBackground }]}>
+              <Text style={[styles.closeButtonText, { color: colors.textSecondary }]}>✕</Text>
             </Pressable>
           </View>
 
           {/* Item Info */}
-          <View style={styles.itemInfo}>
-            <Text style={styles.itemName}>{item.productName}</Text>
-            <Text style={styles.currentQuantity}>
+          <View style={[styles.itemInfo, { backgroundColor: colors.surfaceSecondary }]}>
+            <Text style={[styles.itemName, { color: colors.text }]}>{item.productName}</Text>
+            <Text style={[styles.currentQuantity, { color: colors.textSecondary }]}>
               Current: {item.quantity} {item.quantityUnit}
             </Text>
           </View>
 
           {/* Quick Fractions */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Select</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Quick Select</Text>
             <View style={styles.fractionsContainer}>
               {fractions.map((fraction) => (
                 <Pressable
                   key={fraction.label}
                   style={[
                     styles.fractionButton,
-                    selectedFraction === fraction.label && styles.fractionButtonActive,
+                    { backgroundColor: colors.buttonBackground, borderColor: 'transparent' },
+                    selectedFraction === fraction.label && { backgroundColor: colors.primary, borderColor: colors.primaryDark },
                   ]}
                   onPress={() => {
                     setSelectedFraction(fraction.label);
@@ -162,12 +165,13 @@ export default function UseSomeModal({
                   <Text
                     style={[
                       styles.fractionButtonText,
-                      selectedFraction === fraction.label && styles.fractionButtonTextActive,
+                      { color: colors.text },
+                      selectedFraction === fraction.label && { color: '#FFFFFF' },
                     ]}
                   >
                     {fraction.label}
                   </Text>
-                  <Text style={styles.fractionAmount}>
+                  <Text style={[styles.fractionAmount, { color: selectedFraction === fraction.label ? '#FFFFFF' : colors.textSecondary }]}>
                     {(item.quantity * fraction.value).toFixed(1)} {item.quantityUnit}
                   </Text>
                 </Pressable>
@@ -177,10 +181,10 @@ export default function UseSomeModal({
 
           {/* Custom Amount */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Or Enter Custom Amount</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Or Enter Custom Amount</Text>
             <View style={styles.customAmountContainer}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.inputText }]}
                 value={customAmount}
                 onChangeText={(text) => {
                   setCustomAmount(text);
@@ -188,25 +192,24 @@ export default function UseSomeModal({
                 }}
                 placeholder={`e.g., ${(item.quantity / 2).toFixed(0)}`}
                 keyboardType="decimal-pad"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.inputPlaceholder}
               />
-              <Text style={styles.unitLabel}>{item.quantityUnit}</Text>
+              <Text style={[styles.unitLabel, { color: colors.textSecondary }]}>{item.quantityUnit}</Text>
             </View>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <Pressable
-              style={[styles.actionButton, styles.cancelButton]}
+              style={[styles.actionButton, { backgroundColor: colors.buttonBackground }]}
               onPress={resetAndClose}
             >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
             </Pressable>
             <Pressable
               style={[
                 styles.actionButton,
-                styles.confirmButton,
-                !customAmount && styles.confirmButtonDisabled,
+                { backgroundColor: customAmount ? colors.primary : colors.borderSecondary },
               ]}
               onPress={handleUseCustomAmount}
               disabled={!customAmount}
@@ -214,7 +217,7 @@ export default function UseSomeModal({
               <Text
                 style={[
                   styles.confirmButtonText,
-                  !customAmount && styles.confirmButtonTextDisabled,
+                  { color: customAmount ? '#FFFFFF' : colors.textTertiary },
                 ]}
               >
                 Use Amount
@@ -236,7 +239,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     width: '100%',
     maxWidth: 400,
@@ -251,22 +253,18 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
   },
   closeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButtonText: {
     fontSize: 20,
-    color: '#6B7280',
   },
   itemInfo: {
-    backgroundColor: '#F9FAFB',
     padding: 16,
     borderRadius: 12,
     marginBottom: 20,
@@ -274,12 +272,10 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
     marginBottom: 4,
   },
   currentQuantity: {
     fontSize: 16,
-    color: '#6B7280',
     fontWeight: '500',
   },
   section: {
@@ -288,7 +284,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
     marginBottom: 12,
   },
   fractionsContainer: {
@@ -299,30 +294,19 @@ const styles = StyleSheet.create({
   fractionButton: {
     flex: 1,
     minWidth: '30%',
-    backgroundColor: '#F3F4F6',
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  fractionButtonActive: {
-    backgroundColor: '#10B981',
-    borderColor: '#059669',
   },
   fractionButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
     marginBottom: 2,
-  },
-  fractionButtonTextActive: {
-    color: '#FFFFFF',
   },
   fractionAmount: {
     fontSize: 12,
-    color: '#6B7280',
   },
   customAmountContainer: {
     flexDirection: 'row',
@@ -331,19 +315,15 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
   },
   unitLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6B7280',
   },
   actionButtons: {
     flexDirection: 'row',
@@ -356,26 +336,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
-  cancelButton: {
-    backgroundColor: '#F3F4F6',
-  },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6B7280',
-  },
-  confirmButton: {
-    backgroundColor: '#10B981',
-  },
-  confirmButtonDisabled: {
-    backgroundColor: '#D1D5DB',
   },
   confirmButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  confirmButtonTextDisabled: {
-    color: '#9CA3AF',
   },
 });
