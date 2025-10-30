@@ -3,6 +3,31 @@ import { Text, View, StyleSheet, Pressable } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { useTheme } from '../../src/theme/ThemeContext';
 
+// Simple React Native-compatible event emitter
+class SimpleEventEmitter {
+  private listeners: { [key: string]: Function[] } = {};
+
+  on(event: string, callback: Function) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(callback);
+  }
+
+  off(event: string, callback: Function) {
+    if (!this.listeners[event]) return;
+    this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+  }
+
+  emit(event: string, ...args: any[]) {
+    if (!this.listeners[event]) return;
+    this.listeners[event].forEach(callback => callback(...args));
+  }
+}
+
+// Event emitter for triggering save from tab button
+export const addItemEvents = new SimpleEventEmitter();
+
 // Simple icon component (we'll use emojis for now)
 function TabBarIcon({ name }: { name: string }) {
   return <Text style={{ fontSize: 24 }}>{name}</Text>;
@@ -15,19 +40,34 @@ function CustomAddButton() {
   const isActive = pathname === '/add';
   const { colors } = useTheme();
 
+  // Define colors based on active state
+  const buttonColor = isActive ? '#10B981' : colors.primary; // Green when active (Save), primary otherwise
+  const buttonText = isActive ? 'Save' : 'Add';
+  const buttonIcon = isActive ? '✓' : '+';
+
+  const handlePress = () => {
+    if (isActive) {
+      // If on add page, emit save event
+      addItemEvents.emit('save');
+    } else {
+      // Otherwise navigate to add page
+      router.push('/add');
+    }
+  };
+
   return (
     <Pressable
-      onPress={() => router.push('/add')}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.addButtonContainer,
         pressed && styles.addButtonPressed,
       ]}
     >
       <View style={[styles.addButton, isActive && styles.addButtonActive]}>
-        <View style={[styles.addButtonGlow, { backgroundColor: colors.primary, shadowColor: colors.primary }]} />
-        <View style={[styles.addButtonGlass, { backgroundColor: `${colors.primary}D9` }]}>
-          <Text style={styles.addButtonIcon}>+</Text>
-          <Text style={styles.addButtonLabel}>Add</Text>
+        <View style={[styles.addButtonGlow, { backgroundColor: buttonColor, shadowColor: buttonColor }]} />
+        <View style={[styles.addButtonGlass, { backgroundColor: `${buttonColor}D9` }]}>
+          <Text style={styles.addButtonIcon}>{buttonIcon}</Text>
+          <Text style={styles.addButtonLabel}>{buttonText}</Text>
         </View>
       </View>
     </Pressable>

@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert, ActivityIndicator, Modal } from 'react-native';
-import { useState, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useInventoryStore } from '../../src/store/inventoryStore';
 import { useRouter, useFocusEffect } from 'expo-router';
 import BarcodeScanner from '../../src/components/BarcodeScanner';
@@ -7,6 +7,7 @@ import DateInputOptions from '../../src/components/DateInputOptions';
 import DateScanner from '../../src/components/DateScanner';
 import { fetchProductByBarcode, parseQuantity } from '../../src/services/barcodeService';
 import { useTheme } from '../../src/theme/ThemeContext';
+import { addItemEvents } from './_layout';
 
 export default function AddItemScreen() {
   const router = useRouter();
@@ -79,6 +80,8 @@ export default function AddItemScreen() {
   };
 
   const handleAddItem = () => {
+    console.log('Save button pressed');
+
     if (!productName.trim()) {
       Alert.alert('Error', 'Please enter a product name');
       return;
@@ -102,43 +105,72 @@ export default function AddItemScreen() {
       return;
     }
 
-    addItem({
-      productName: productName.trim(),
-      brand: brand.trim() || undefined,
-      itemCount: itemCountNum,
-      quantity: quantityNum,
-      quantityUnit,
-      bestBeforeDate,
-      purchaseDate: new Date(),
-      storageLocation,
-      barcode: scannedBarcode || undefined,
-    });
+    try {
+      console.log('Adding item to store...');
+      addItem({
+        productName: productName.trim(),
+        brand: brand.trim() || undefined,
+        itemCount: itemCountNum,
+        quantity: quantityNum,
+        quantityUnit,
+        bestBeforeDate,
+        purchaseDate: new Date(),
+        storageLocation,
+        barcode: scannedBarcode || undefined,
+      });
 
-    Alert.alert('Success', 'Item added to inventory!', [
-      {
-        text: 'OK',
-        onPress: () => {
-          // Reset form
-          setProductName('');
-          setBrand('');
-          setItemCount('1');
-          setQuantity('1');
-          const defaultDate = new Date();
-          defaultDate.setDate(defaultDate.getDate() + 7);
-          setBestBeforeDate(defaultDate);
-          setScannedBarcode(null);
-          // Navigate to home
-          router.push('/');
+      console.log('Item added successfully');
+
+      // Reset form immediately
+      setProductName('');
+      setBrand('');
+      setItemCount('1');
+      setQuantity('1');
+      const defaultDate = new Date();
+      defaultDate.setDate(defaultDate.getDate() + 7);
+      setBestBeforeDate(defaultDate);
+      setScannedBarcode(null);
+
+      // Show success message and navigate
+      Alert.alert('Success', 'Item added to inventory!', [
+        {
+          text: 'View Inventory',
+          onPress: () => router.replace('/'),
         },
-      },
-    ]);
+        {
+          text: 'Add Another',
+          style: 'cancel',
+        },
+      ]);
+    } catch (error) {
+      console.error('Error adding item:', error);
+      Alert.alert('Error', 'Failed to add item. Please try again.');
+    }
   };
 
+  // Listen for save event from tab button
+  useEffect(() => {
+    const handleSaveEvent = () => {
+      handleAddItem();
+    };
+
+    addItemEvents.on('save', handleSaveEvent);
+
+    return () => {
+      addItemEvents.off('save', handleSaveEvent);
+    };
+  }, [handleAddItem]);
+
   return (
-    <>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={100}
+    >
       <ScrollView
         ref={scrollViewRef}
         style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={styles.contentContainer}
       >
         <View style={styles.content}>
           <Text style={[styles.headerText, { color: colors.text }]}>Add New Item</Text>
@@ -172,6 +204,13 @@ export default function AddItemScreen() {
               <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Fetching product info...</Text>
             </View>
           )}
+
+          {/* Expiry Date Input Options */}
+          <DateInputOptions
+            initialDate={bestBeforeDate}
+            onDateChange={setBestBeforeDate}
+            onScanPress={() => setShowDateScanner(true)}
+          />
 
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: colors.borderSecondary }]} />
@@ -290,13 +329,6 @@ export default function AddItemScreen() {
           </View>
         </View>
 
-        {/* Expiry Date Input Options */}
-        <DateInputOptions
-          initialDate={bestBeforeDate}
-          onDateChange={setBestBeforeDate}
-          onScanPress={() => setShowDateScanner(true)}
-        />
-
         {/* Add Button */}
         <Pressable style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={handleAddItem}>
           <Text style={styles.addButtonText}>➕ Add to Inventory</Text>
@@ -315,39 +347,42 @@ export default function AddItemScreen() {
       </View>
     </ScrollView>
 
-    {/* Barcode Scanner Modal */}
-    <Modal
-      visible={showScanner}
-      animationType="slide"
-      onRequestClose={() => setShowScanner(false)}
-    >
-      <BarcodeScanner
-        onBarcodeScanned={handleBarcodeScanned}
-        onClose={() => setShowScanner(false)}
-      />
-    </Modal>
+      {/* Barcode Scanner Modal */}
+      <Modal
+        visible={showScanner}
+        animationType="slide"
+        onRequestClose={() => setShowScanner(false)}
+      >
+        <BarcodeScanner
+          onBarcodeScanned={handleBarcodeScanned}
+          onClose={() => setShowScanner(false)}
+        />
+      </Modal>
 
-    {/* Date Scanner Modal */}
-    <Modal
-      visible={showDateScanner}
-      animationType="slide"
-      onRequestClose={() => setShowDateScanner(false)}
-    >
-      <DateScanner
-        onDateScanned={(date) => {
-          setBestBeforeDate(date);
-          setShowDateScanner(false);
-        }}
-        onClose={() => setShowDateScanner(false)}
-      />
-    </Modal>
-    </>
+      {/* Date Scanner Modal */}
+      <Modal
+        visible={showDateScanner}
+        animationType="slide"
+        onRequestClose={() => setShowDateScanner(false)}
+      >
+        <DateScanner
+          onDateScanned={(date) => {
+            setBestBeforeDate(date);
+            setShowDateScanner(false);
+          }}
+          onClose={() => setShowDateScanner(false)}
+        />
+      </Modal>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  contentContainer: {
+    paddingBottom: 40,
   },
   content: {
     padding: 16,

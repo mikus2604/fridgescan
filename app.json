@@ -7,13 +7,19 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "fridgescan",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.justarieldotcom.fridgescan",
+      "infoPlist": {
+        "NSCameraUsageDescription": "FridgeScan needs access to your camera to scan barcodes and expiry dates.",
+        "NSPhotoLibraryUsageDescription": "FridgeScan needs access to your photos to save scanned images."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +29,9 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "package": "com.justarieldotcom.fridgescan"
     },
@@ -38,7 +46,9 @@
           "cameraPermission": "Allow FridgeScan to access your camera to scan barcodes and expiry dates."
         }
       ],
-      "expo-dev-client"
+      "expo-dev-client",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

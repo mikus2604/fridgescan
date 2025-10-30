@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator, Dimensions, LayoutChangeEvent } from 'react-native';
 import { useState, useRef } from 'react';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { extractTextFromImage, formatDate } from '../services/ocrService';
+import { extractTextFromImage } from '../services/ocrService';
+import { formatDate } from '../utils/dateParser';
 import { useTheme } from '../theme/ThemeContext';
 import { cropToRegion } from '../utils/imagePreprocessing';
 

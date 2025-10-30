@@ -6,7 +6,7 @@
 import { Platform } from 'react-native';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 import type { OCRResult } from './ocrService';
-import { parseDateFromText } from './ocrService';
+import { parseDateFromText } from '../utils/dateParser';
 
 export interface NativeOCROptions {
   preprocessed?: boolean;
@@ -104,7 +104,7 @@ export async function recognizeTextNative(
     console.log('[Native OCR] Processing time:', processingTime, 'ms');
 
     // Extract text blocks with confidence scores
-    const blocks: TextBlock[] = (result.blocks || []).map((block) => {
+    const blocks: TextBlock[] = (result.blocks || []).map((block: any) => {
       const confidence = block.recognizedLanguages?.[0]?.confidence || 0.85;
       console.log('[Native OCR] Block text:', block.text, '| confidence:', confidence);
 
@@ -113,10 +113,10 @@ export async function recognizeTextNative(
         confidence,
         boundingBox: block.frame
           ? {
-              x: block.frame.x,
-              y: block.frame.y,
-              width: block.frame.width,
-              height: block.frame.height,
+              x: (block.frame as any).x || 0,
+              y: (block.frame as any).y || 0,
+              width: (block.frame as any).width || 0,
+              height: (block.frame as any).height || 0,
             }
           : undefined,
       };

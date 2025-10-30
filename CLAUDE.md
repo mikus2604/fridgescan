@@ -6,49 +6,113 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FridgeScan is a cross-platform inventory management app for tracking food items with barcode scanning, OCR for expiry dates, and AI-powered recipe suggestions. The app helps users reduce food waste through color-coded expiry tracking and collaborative household sharing.
 
-**Current Status:** Planning phase - no code implementation yet. The project plan is defined in PROJECT_PLAN.md.
+**Current Status:** Active Development - Authentication system complete, inventory features in progress.
+
+**Development Focus:** Currently focusing on Android native app development. Web version available for testing at port 3003.
+
+### Completed Features
+- ✅ Supabase authentication (email/password, Google OAuth, Apple OAuth)
+- ✅ User profile and household management
+- ✅ Protected routes and session management
+- ✅ Database schema with Row Level Security
+- ✅ Barcode scanning functionality
+- ✅ OCR for expiry date recognition
+- ✅ Inventory CRUD operations
+- ✅ Color-coded expiry tracking
+- ✅ Storage location management
+- ✅ Theme system (light/dark mode)
+
+### In Progress
+- 🚧 Production OAuth configuration
+- 🚧 Recipe suggestions feature
+- 🚧 Shopping list generation
+- 🚧 Usage analytics
+
+### Upcoming
+- 📋 Push notifications for expiry alerts
+- 📋 Household collaboration enhancements
+- 📋 Native iOS/Android builds
+- 📋 App Store/Play Store submission
 
 ## Technology Stack
 
-### Frontend (Planned)
-- **React Native (Expo)**: Single codebase for web, iOS, and Android
-- **TypeScript**: Type safety across the stack
-- **Expo Router**: Navigation
-- **Expo Camera**: Barcode scanning
-- **NativeWind**: TailwindCSS for React Native
-- **Zustand or React Query**: State management
+### Frontend (Implemented)
+- **React Native (Expo)**: Single codebase for web, iOS, and Android ✅
+- **TypeScript**: Type safety across the stack ✅
+- **Expo Router**: File-based navigation ✅
+- **Expo Camera**: Barcode scanning ✅
+- **ML Kit Text Recognition**: Native OCR for expiry dates ✅
+- **Zustand**: Global state management ✅
+- **React Context**: Theme and auth state ✅
 
-### Backend (Planned)
-- **Node.js + Express** or **Next.js API routes**
-- **PostgreSQL**: Primary database
-- **Prisma ORM**: Type-safe database access
-- **AWS S3 or Cloudinary**: Image storage
+### Backend (Implemented)
+- **Supabase**: Backend-as-a-Service (PostgreSQL + Auth + Storage) ✅
+- **PostgreSQL**: Primary database via Supabase ✅
+- **Row Level Security**: Database-level authorization ✅
+- **Supabase Storage**: Image storage (planned)
 
-### External Services (Planned)
-- **Barcode API**: OpenFoodFacts API (free food database) or UPC Database
-- **OCR**: Google Cloud Vision API or AWS Textract for date recognition
-- **AI**: OpenAI GPT-4 or Claude API for recipe suggestions
-- **Push Notifications**: Firebase Cloud Messaging or OneSignal
-- **Authentication**: Firebase Auth or Auth0
+### External Services (Implemented/Planned)
+- **Barcode API**: OpenFoodFacts API ✅
+- **OCR**: Google ML Kit Text Recognition (native) ✅
+- **AI**: OpenAI GPT-4 or Claude API for recipe suggestions (planned)
+- **Push Notifications**: Expo Notifications (planned)
+- **Authentication**: Supabase Auth (email, Google, Apple OAuth) ✅
 
-## Planned Project Structure
+## Current Project Structure
 
 ```
 fridgescan/
-├── apps/
-│   ├── mobile/          # Expo React Native app
-│   ├── web/             # Next.js web app (or Expo Web)
-│   └── api/             # Backend API (Next.js API routes or Express)
-├── packages/
-│   ├── ui/              # Shared UI components
-│   ├── database/        # Prisma schema & migrations
-│   ├── shared/          # Shared utilities, types
-│   └── config/          # Shared config (ESLint, TypeScript)
-├── docs/
-│   ├── PROJECT_PLAN.md
-│   ├── API_DOCS.md
-│   └── DESIGN_SYSTEM.md
-└── scripts/             # Build, deployment scripts
+├── app/                        # Expo Router app directory
+│   ├── (tabs)/                # Tab navigation group
+│   │   ├── index.tsx          # Home/Inventory screen
+│   │   ├── add.tsx            # Add item screen
+│   │   ├── locations.tsx      # Storage locations
+│   │   ├── recipes.tsx        # Recipe suggestions
+│   │   ├── profile.tsx        # User profile
+│   │   └── _layout.tsx        # Tab layout
+│   ├── auth/                  # Authentication screens
+│   │   ├── login.tsx          # Login screen
+│   │   ├── register.tsx       # Sign up screen
+│   │   └── callback.tsx       # OAuth callback
+│   └── _layout.tsx            # Root layout with providers
+├── src/
+│   ├── components/            # Reusable components
+│   │   ├── BarcodeScanner.tsx
+│   │   ├── DateScanner.tsx
+│   │   ├── EditItemModal.tsx
+│   │   ├── UseSomeModal.tsx
+│   │   ├── DateInputOptions.tsx
+│   │   └── ProtectedRoute.tsx
+│   ├── contexts/              # React contexts
+│   │   └── AuthContext.tsx    # Authentication state
+│   ├── services/              # External API services
+│   │   ├── barcodeService.ts  # OpenFoodFacts API
+│   │   ├── ocrService.ts      # Google Cloud Vision
+│   │   ├── nativeOCRService.ts # ML Kit OCR
+│   │   └── household.service.ts
+│   ├── store/                 # Zustand stores
+│   │   └── inventoryStore.ts  # Inventory state
+│   ├── theme/                 # Theme system
+│   │   ├── ThemeContext.tsx
+│   │   ├── colors.ts
+│   │   └── useThemedStyles.ts
+│   ├── types/                 # TypeScript types
+│   │   └── database.types.ts  # Supabase generated types
+│   ├── utils/                 # Utility functions
+│   │   ├── digitValidation.ts
+│   │   └── imagePreprocessing.ts
+│   └── lib/                   # External libraries config
+│       └── supabase.ts        # Supabase client
+├── supabase/
+│   └── migrations/            # Database migrations
+│       └── 20250101000000_initial_schema.sql
+├── assets/                    # Static assets
+├── scripts/                   # Build scripts
+└── docs/                      # Documentation
+    ├── SUPABASE_SETUP.md
+    ├── COMPLETE_OAUTH_SETUP.md
+    ├── QUICK_SETUP_VALUES.md
+    └── ARCHITECTURE.md
 ```
 
 ## Database Schema (Core Entities)
@@ -186,6 +250,9 @@ npm run type-check
 
 # Linting
 npm run lint
+
+# Build Android development client (required after adding native modules)
+eas build --platform android --profile development
 ```
 
 **IMPORTANT: Port Configuration**
@@ -193,19 +260,21 @@ npm run lint
 - Another app on this server uses port 3000
 - Set in environment or use: `npx expo start --web --port 3003`
 
-### Database (Prisma)
+**IMPORTANT: Native Module Development**
+- When adding new native modules (like expo-web-browser, expo-camera, etc.), you MUST rebuild the development client
+- Run `eas build --platform android --profile development` to create a new development build
+- The build will include all native modules listed in app.json plugins
+- Download and install the new APK on your Android device before testing
+- Latest development build: https://expo.dev/accounts/justarieldotcom/projects/fridgescan/builds/a26c092d-8e6c-4717-b526-8bd5382ea598
+
+### Database (Supabase)
 ```bash
-# Generate Prisma Client
-npx prisma generate
+# Run migrations in Supabase Dashboard SQL Editor
+# Copy contents of supabase/migrations/20250101000000_initial_schema.sql
+# Paste into SQL Editor at: https://app.supabase.com/project/xcvhnqofiazdjyxvbjwj/sql
 
-# Run migrations
-npx prisma migrate dev
-
-# Reset database
-npx prisma migrate reset
-
-# Open Prisma Studio
-npx prisma studio
+# Generate TypeScript types from Supabase schema
+npx supabase gen types typescript --project-id xcvhnqofiazdjyxvbjwj > src/types/database.types.ts
 ```
 
 ### Testing (To Be Defined)
@@ -255,7 +324,19 @@ npm test -- --coverage
 
 ## Reference Documentation
 
-- Full project plan: PROJECT_PLAN.md
-- Technology decisions are documented in PROJECT_PLAN.md sections 1-6
-- Database schema details in PROJECT_PLAN.md section 2
-- UI/UX flows in PROJECT_PLAN.md sections 3-4
+### Setup Guides
+- **SUPABASE_SETUP.md**: Complete Supabase configuration guide
+- **COMPLETE_OAUTH_SETUP.md**: Step-by-step OAuth setup for Google and Apple
+- **QUICK_SETUP_VALUES.md**: Quick reference for all configuration values
+- **ARCHITECTURE.md**: System architecture and design patterns
+
+### Project Documentation
+- **PROJECT_PLAN.md**: Original project planning document
+- **supabase/migrations/**: Database schema and migrations
+
+### Key Files to Know
+- **src/lib/supabase.ts**: Supabase client configuration
+- **src/contexts/AuthContext.tsx**: Authentication state management
+- **src/store/inventoryStore.ts**: Inventory state (Zustand)
+- **app/_layout.tsx**: Root layout with providers and protected routes
+- **src/types/database.types.ts**: Generated TypeScript types from Supabase schema
