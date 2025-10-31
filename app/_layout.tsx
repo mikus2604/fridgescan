@@ -43,6 +43,10 @@ function RootLayoutContent() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
+          name="auth/forgot-password"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name="auth/callback"
           options={{ headerShown: false }}
         />

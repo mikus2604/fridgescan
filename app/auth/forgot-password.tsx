@@ -9,62 +9,37 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useTheme } from '../../src/theme/ThemeContext';
 
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const { signIn, signInWithGoogle, signInWithApple, isConfigured } = useAuth();
+  const { resetPassword, isConfigured } = useAuth();
   const { colors } = useTheme();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
-  const handleEmailLogin = async () => {
-    if (!email || !password) {
-      setError('Please enter both email and password');
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address');
       return;
     }
 
     setIsLoading(true);
     setError('');
 
-    const { error } = await signIn(email, password);
+    const { error } = await resetPassword(email);
 
     if (error) {
       setError(error.message);
       setIsLoading(false);
     } else {
-      // Navigation will be handled by auth state change
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setError('');
-
-    const { error } = await signInWithGoogle();
-
-    if (error) {
-      setError(error.message);
-      setIsLoading(false);
-    }
-  };
-
-  const handleAppleLogin = async () => {
-    setIsLoading(true);
-    setError('');
-
-    const { error } = await signInWithApple();
-
-    if (error) {
-      setError(error.message);
+      setSuccess(true);
       setIsLoading(false);
     }
   };
@@ -78,9 +53,6 @@ export default function LoginScreen() {
           </Text>
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
             Please set up your Supabase project credentials in the .env file.
-          </Text>
-          <Text style={[styles.errorText, { color: colors.textSecondary, marginTop: 16 }]}>
-            Required: EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY
           </Text>
         </View>
       </View>
@@ -98,14 +70,40 @@ export default function LoginScreen() {
     },
     button: { backgroundColor: colors.primary },
     buttonText: { color: '#FFFFFF' },
-    socialButton: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-    },
-    socialButtonText: { color: colors.text },
     linkText: { color: colors.primary },
     errorText: { color: colors.error },
+    successText: { color: colors.success },
   };
+
+  if (success) {
+    return (
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={[styles.container, dynamicStyles.container]}
+      >
+        <View style={styles.content}>
+          <View style={styles.successContainer}>
+            <Text style={styles.successIcon}>✓</Text>
+            <Text style={[styles.successTitle, dynamicStyles.title]}>
+              Check Your Email
+            </Text>
+            <Text style={[styles.successMessage, dynamicStyles.subtitle]}>
+              We've sent a password reset link to {email}. Please check your inbox and follow the
+              instructions to reset your password.
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, dynamicStyles.button, { marginTop: 24 }]}
+              onPress={() => router.push('/auth/login')}
+            >
+              <Text style={[styles.buttonText, dynamicStyles.buttonText]}>
+                Back to Login
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -117,9 +115,9 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Text style={[styles.title, dynamicStyles.title]}>Welcome Back</Text>
+          <Text style={[styles.title, dynamicStyles.title]}>Forgot Password?</Text>
           <Text style={[styles.subtitle, dynamicStyles.subtitle]}>
-            Sign in to your FridgeScan account
+            Enter your email address and we'll send you a link to reset your password
           </Text>
 
           {error ? (
@@ -142,74 +140,26 @@ export default function LoginScreen() {
               editable={!isLoading}
             />
 
-            <TextInput
-              style={[styles.input, dynamicStyles.input]}
-              placeholder="Password"
-              placeholderTextColor={colors.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!isLoading}
-            />
-
             <TouchableOpacity
               style={[styles.button, dynamicStyles.button]}
-              onPress={handleEmailLogin}
+              onPress={handleResetPassword}
               disabled={isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={[styles.buttonText, dynamicStyles.buttonText]}>
-                  Sign In
+                  Send Reset Link
                 </Text>
               )}
             </TouchableOpacity>
 
-            <View style={styles.divider}>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-              <Text style={[styles.dividerText, { color: colors.textSecondary }]}>
-                OR
-              </Text>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.socialButton, dynamicStyles.socialButton]}
-              onPress={handleGoogleLogin}
-              disabled={isLoading}
-            >
-              <Text style={[styles.socialButtonText, dynamicStyles.socialButtonText]}>
-                Continue with Google
-              </Text>
-            </TouchableOpacity>
-
-            {Platform.OS === 'ios' && (
-              <TouchableOpacity
-                style={[styles.socialButton, dynamicStyles.socialButton]}
-                onPress={handleAppleLogin}
-                disabled={isLoading}
-              >
-                <Text style={[styles.socialButtonText, dynamicStyles.socialButtonText]}>
-                  Continue with Apple
-                </Text>
-              </TouchableOpacity>
-            )}
-
             <View style={styles.footer}>
               <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-                Don't have an account?{' '}
+                Remember your password?{' '}
               </Text>
-              <TouchableOpacity onPress={() => router.push('/auth/register')}>
-                <Text style={[styles.linkText, dynamicStyles.linkText]}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.forgotPasswordContainer}>
-              <TouchableOpacity onPress={() => router.push('/auth/forgot-password')}>
-                <Text style={[styles.forgotPasswordText, dynamicStyles.linkText]}>
-                  Forgot Password?
-                </Text>
+              <TouchableOpacity onPress={() => router.push('/auth/login')}>
+                <Text style={[styles.linkText, dynamicStyles.linkText]}>Sign In</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -241,6 +191,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 32,
     textAlign: 'center',
+    lineHeight: 24,
   },
   form: {
     width: '100%',
@@ -263,32 +214,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  socialButton: {
-    height: 56,
-    borderWidth: 1,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  socialButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    fontWeight: '500',
   },
   footer: {
     flexDirection: 'row',
@@ -329,12 +254,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  forgotPasswordContainer: {
+  successContainer: {
     alignItems: 'center',
-    marginTop: 16,
   },
-  forgotPasswordText: {
-    fontSize: 14,
-    fontWeight: '600',
+  successIcon: {
+    fontSize: 64,
+    color: '#10B981',
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });

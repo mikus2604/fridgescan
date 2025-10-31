@@ -1,11 +1,15 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useInventoryStore } from '../../src/store/inventoryStore';
 import { useTheme } from '../../src/theme/ThemeContext';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const items = useInventoryStore((state) => state.items);
   const getExpiryStatus = useInventoryStore((state) => state.getExpiryStatus);
   const { theme, colors, toggleTheme } = useTheme();
+  const { user, profile, signOut, currentHousehold } = useAuth();
 
   // Calculate statistics
   const totalItems = items.length;
@@ -19,16 +23,49 @@ export default function ProfileScreen() {
     (item) => getExpiryStatus(item.bestBeforeDate).status === 'warning'
   ).length;
 
+  // Handle sign out
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await signOut();
+          },
+        },
+      ]
+    );
+  };
+
+  // Get user display name and email
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || 'User';
+  const displayEmail = user?.email || 'No email';
+  const avatarInitial = displayName.charAt(0).toUpperCase();
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
         {/* Profile Header */}
         <View style={[styles.profileHeader, { backgroundColor: colors.surface }]}>
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={styles.avatarText}>👤</Text>
+            <Text style={styles.avatarText}>{avatarInitial}</Text>
           </View>
-          <Text style={[styles.userName, { color: colors.text }]}>Demo User</Text>
-          <Text style={[styles.userEmail, { color: colors.textSecondary }]}>demo@fridgescan.app</Text>
+          <Text style={[styles.userName, { color: colors.text }]}>{displayName}</Text>
+          <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{displayEmail}</Text>
+          {currentHousehold && (
+            <View style={[styles.householdBadge, { backgroundColor: colors.backgroundSecondary }]}>
+              <Text style={[styles.householdText, { color: colors.textSecondary }]}>
+                🏠 {currentHousehold.name}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Statistics */}
@@ -126,14 +163,24 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Sign Out Button */}
+        <View style={styles.section}>
+          <Pressable
+            style={[styles.signOutButton, { backgroundColor: colors.surface, borderColor: colors.error }]}
+            onPress={handleSignOut}
+          >
+            <Text style={[styles.signOutText, { color: colors.error }]}>🚪 Sign Out</Text>
+          </Pressable>
+        </View>
+
         {/* Future Features Note */}
         <View style={[styles.featureNote, { backgroundColor: colors.warningBackground, borderLeftColor: colors.warning }]}>
           <Text style={[styles.featureNoteTitle, { color: theme === 'dark' ? colors.warning : '#92400E' }]}>🚧 Coming Soon:</Text>
           <Text style={[styles.featureNoteText, { color: theme === 'dark' ? colors.textSecondary : '#78350F' }]}>
-            • User authentication (sign up/login){'\n'}
             • Push notifications for expiry alerts{'\n'}
-            • Household sharing and collaboration{'\n'}
-            • Analytics and insights dashboard{'\n'}
+            • Advanced household collaboration{'\n'}
+            • Usage analytics dashboard{'\n'}
+            • Recipe suggestions{'\n'}
             • Export data and reports
           </Text>
         </View>
@@ -289,5 +336,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#78350F',
     lineHeight: 20,
+  },
+  householdBadge: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  householdText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  signOutButton: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  signOutText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
