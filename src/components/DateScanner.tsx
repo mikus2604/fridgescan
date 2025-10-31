@@ -290,7 +290,7 @@ export default function DateScanner({ onDateScanned, onClose }: DateScannerProps
               • Hold camera steady{'\n'}
               • Get close to the date{'\n'}
               • Avoid glare and shadows{'\n'}
-              • Works with: DD/MM/YYYY, YYYY-MM-DD, etc.
+              • Works with: DD/MM/YYYY, MM/YYYY, YYYY-MM-DD, etc.
             </Text>
           </View>
         </View>

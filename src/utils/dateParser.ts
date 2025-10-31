@@ -22,12 +22,16 @@ export function parseDateFromText(text: string): ParsedDate {
   const patterns = [
     // YYYY/MM/DD, YYYY-MM-DD (ISO format - try first for highest confidence)
     { regex: /(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/g, format: 'YYYY/MM/DD' },
+    // MM/YYYY or MM-YYYY (month and year only, e.g., "07/2026", "12-2025")
+    { regex: /\b(\d{1,2})[\/\-\.](\d{4})\b/g, format: 'MM/YYYY' },
     // DD/MM/YYYY, DD/MM/YY
     { regex: /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/g, format: 'DD/MM/YYYY' },
     // DDMMMYY or DDMMMYYYY (no spaces, e.g., "30NOV25", "25DEC2024")
     { regex: /(\d{1,2})(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*(\d{2,4})/gi, format: 'DD MMM YYYY' },
     // DD MMM YYYY, DD MMM YY with spaces (e.g., "25 DEC 2024", "30 NOV 25")
     { regex: /(\d{1,2})\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\s+(\d{2,4})/gi, format: 'DD MMM YYYY' },
+    // MMM YYYY (e.g., "JUL 2026", "DEC 2025")
+    { regex: /\b(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\s*(\d{4})\b/gi, format: 'MMM YYYY' },
     // MMM DD YYYY (e.g., "DEC 25 2024")
     { regex: /(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\s*(\d{1,2})[,\s]+(\d{2,4})/gi, format: 'MMM DD YYYY' },
     // YYYYMMDD (8 digits, no separators)
@@ -80,6 +84,24 @@ function parseMatchedDate(match: RegExpMatchArray, format: string): { date: Date
           year += year < 50 ? 2000 : 1900;
         }
         confidence = 90; // High confidence for standard format
+        break;
+
+      case 'MM/YYYY':
+        // Month and year only - set day to last day of month
+        month = parseInt(match[1], 10) - 1;
+        year = parseInt(match[2], 10);
+        // Get last day of the month
+        day = new Date(year, month + 1, 0).getDate();
+        confidence = 88; // High confidence for MM/YYYY format
+        break;
+
+      case 'MMM YYYY':
+        // Month name and year only - set day to last day of month
+        month = getMonthFromName(match[1]);
+        year = parseInt(match[2], 10);
+        // Get last day of the month
+        day = new Date(year, month + 1, 0).getDate();
+        confidence = 88; // High confidence for MMM YYYY format
         break;
 
       case 'YYYY/MM/DD':
