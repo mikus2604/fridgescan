@@ -1,8 +1,11 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { useInventoryStore } from '../../src/store/inventoryStore';
 import { useTheme } from '../../src/theme/ThemeContext';
 import { useAuth } from '../../src/contexts/AuthContext';
+import HouseholdManagementModal from '../../src/components/HouseholdManagementModal';
+import PendingInvitesCard from '../../src/components/PendingInvitesCard';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -10,6 +13,7 @@ export default function ProfileScreen() {
   const getExpiryStatus = useInventoryStore((state) => state.getExpiryStatus);
   const { theme, colors, toggleTheme } = useTheme();
   const { user, profile, signOut, currentHousehold } = useAuth();
+  const [householdModalVisible, setHouseholdModalVisible] = useState(false);
 
   // Calculate statistics
   const totalItems = items.length;
@@ -67,6 +71,11 @@ export default function ProfileScreen() {
             </View>
           )}
         </View>
+
+        {/* Pending Invitations */}
+        <PendingInvitesCard onInviteAccepted={() => {
+          // Refresh the page or show a success message
+        }} />
 
         {/* Statistics */}
         <View style={styles.section}>
@@ -134,7 +143,10 @@ export default function ProfileScreen() {
             <Text style={[styles.settingArrow, { color: colors.textTertiary }]}>›</Text>
           </Pressable>
 
-          <Pressable style={[styles.settingItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+          <Pressable
+            style={[styles.settingItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}
+            onPress={() => setHouseholdModalVisible(true)}
+          >
             <Text style={[styles.settingText, { color: colors.text }]}>👥 Household</Text>
             <Text style={[styles.settingArrow, { color: colors.textTertiary }]}>›</Text>
           </Pressable>
@@ -185,6 +197,12 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </View>
+
+      {/* Household Management Modal */}
+      <HouseholdManagementModal
+        visible={householdModalVisible}
+        onClose={() => setHouseholdModalVisible(false)}
+      />
     </ScrollView>
   );
 }

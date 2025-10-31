@@ -261,4 +261,131 @@ export const householdService = {
       return { error };
     }
   },
+
+  // =============================================================================
+  // EMAIL-BASED INVITATIONS
+  // =============================================================================
+
+  // Send email invitation to join household
+  async sendEmailInvitation(householdId: string, inviteeEmail: string) {
+    try {
+      const { data, error } = await supabase.rpc('create_email_invitation', {
+        p_household_id: householdId,
+        p_invitee_email: inviteeEmail.toLowerCase().trim(),
+        p_expires_in_days: 7,
+      });
+
+      if (error) throw error;
+
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  // Get pending invitations for current household
+  async getHouseholdInvitations(householdId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('household_email_invites')
+        .select(`
+          *,
+          inviter:inviter_id (
+            full_name,
+            email
+          )
+        `)
+        .eq('household_id', householdId)
+        .order('invited_at', { ascending: false });
+
+      if (error) throw error;
+
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  // Get invitations sent to current user
+  async getMyInvitations() {
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id || '')
+        .single();
+
+      if (profileError) throw profileError;
+
+      const { data, error } = await supabase
+        .from('household_email_invites')
+        .select(`
+          *,
+          household:household_id (
+            name,
+            created_by
+          ),
+          inviter:inviter_id (
+            full_name,
+            email
+          )
+        `)
+        .eq('invitee_email', profile?.email || '')
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .order('invited_at', { ascending: false });
+
+      if (error) throw error;
+
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  },
+
+  // Accept email invitation
+  async acceptInvitation(inviteId: string) {
+    try {
+      const { error } = await supabase.rpc('accept_email_invitation', {
+        p_invite_id: inviteId,
+      });
+
+      if (error) throw error;
+
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
+  },
+
+  // Reject email invitation
+  async rejectInvitation(inviteId: string) {
+    try {
+      const { error } = await supabase.rpc('reject_email_invitation', {
+        p_invite_id: inviteId,
+      });
+
+      if (error) throw error;
+
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
+  },
+
+  // Cancel/delete an invitation (by inviter)
+  async cancelInvitation(inviteId: string) {
+    try {
+      const { error } = await supabase
+        .from('household_email_invites')
+        .delete()
+        .eq('id', inviteId);
+
+      if (error) throw error;
+
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
+  },
 };
